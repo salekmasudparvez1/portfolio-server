@@ -8,11 +8,11 @@ import config from '../../config';
 const signup = catchAsync(async (req: Request, res: Response) => {
   console.log("req.body:", req.body);
   const getDoc = req.body;
- 
+
 
 
   const result = await authService.signupFunc(getDoc);
-   res.cookie("refreshToken", result.refreshToken, {
+  res.cookie("refreshToken", result.refreshToken, {
     secure: config.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "none",
@@ -25,6 +25,27 @@ const signup = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.ACCEPTED,
   });
 });
+const resendVerificationCode = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const result = await authService.resendVerificationCodeFunc(email);
+  sendResponse(res, {
+    success: true,
+    message: 'Verification code resent successfully',
+    data: result,
+    statusCode: StatusCodes.OK,
+  });
+});
+const verificationUserCode = catchAsync(async (req: Request, res: Response) => {
+  const { email, emailVerifyCode } = req.body;
+  const result = await authService.verificationUserCodeFunc(email, emailVerifyCode);
+  sendResponse(res, {
+    success: true,
+    message: 'User verified successfully',
+    data: result,
+    statusCode: StatusCodes.OK,
+  });
+});
+
 const login = catchAsync(async (req: Request, res: Response) => {
   const result = await authService.loginFunc(req.body);
 
@@ -59,7 +80,7 @@ const getProfileInfo = catchAsync(async (req: Request, res: Response) => {
 
 const updateUser = catchAsync(async (req: Request, res: Response) => {
   const updatedData = req.body;
-  const result = await authService.updateUserFunc( updatedData);
+  const result = await authService.updateUserFunc(updatedData);
   sendResponse(res, {
     success: true,
     message: 'User updated successfully',
@@ -114,12 +135,14 @@ const updateName = catchAsync(async (req: Request, res: Response) => {
 
 export const authController = {
   signup,
+  resendVerificationCode,
+  verificationUserCode,
   login,
   getProfileInfo,
   updateUser,
 
 
- 
+
   status,
   updatePassword,
   getSingleUser,

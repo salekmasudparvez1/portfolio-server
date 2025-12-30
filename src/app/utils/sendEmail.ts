@@ -1,33 +1,65 @@
 import { Resend } from "resend";
 import config from "../config";
+import AppError from "../errors/AppError";
+import { StatusCodes } from "http-status-codes";
 
-export const sendVerificationCodeEmail = async (email: string, code: string) => {
+/**
+ * Validate config ONCE at module load
+ */
+if (!config.RESEND_API_KEY) {
+  throw new AppError(
+    StatusCodes.INTERNAL_SERVER_ERROR,
+    "RESEND_API_KEY is missing"
+  );
+}
+
+if (!config.EMAIL_TEMPLATE_ID) {
+  throw new AppError(
+    StatusCodes.INTERNAL_SERVER_ERROR,
+    "EMAIL_TEMPLATE_ID is missing"
+  );
+}
+
+/**
+ * Singleton Resend client
+ */
+const resend = new Resend(config.RESEND_API_KEY);
+
+/**
+ * Send verification email using Resend template
+ */
+export const sendVerificationCodeEmail = async (
+  email: string,
+  code: string,
+  name: string
+) => {
   console.info("➡️ sendVerificationCodeEmail called for:", email);
-  if (!config.RESEND_API_KEY) {
-    console.error("❌ RESEND_API_KEY is not configured");
-    throw new Error("Resend API key not configured");
+
+  // TypeScript knows EMAIL_TEMPLATE_ID exists now, use !
+  const templateId = config.EMAIL_TEMPLATE_ID!;
+
+  const { data, error } = await resend.emails.send({
+    from: "Support <support@parvez.dev>",
+    to: email,
+    template: {
+      id: templateId,
+      variables: {
+        NAME: name,
+        CODE: code,
+        YEAR: new Date().getFullYear(),
+      },
+    },
+  });
+
+  if (error) {
+    console.error("❌ Resend email error:", error);
+    throw new AppError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      error.message || "Failed to send verification email"
+    );
   }
-  const resend = new Resend(config.RESEND_API_KEY);
-  try {
-    const result = await resend.emails.send({
-      from: "<onboarding@resend.dev>",
-      to: email,
-      subject: "Your Email Verification Code",
-      html: `
-        <h3>Email Verification</h3>
-        <p>Your verification code is:</p>
-        <h2>${code}</h2>
-        <p>This code will expire in 10 minutes.</p>
-      `
-    });
-    console.info("✅ Resend response:", result);
-    // If Resend doesn't return a message id, warn so delivery isn't assumed
-    if (!result || !(result as any).id) {
-      console.warn("⚠️ Resend did not return a message id; delivery not guaranteed", result);
-    }
-    return result;
-  } catch (err) {
-    console.error("❌ Failed to send verification email:", err);
-    throw err;
-  }
+
+  console.info("✅ Verification email sent. ID:", data?.id);
+
+  return data; // { id: string }
 };

@@ -17,7 +17,6 @@ const authSchema = new Schema(
     password: { type: String, select: false },
     role: { type: String, enum: ['admin', 'user'], required: true },
     isBlocked: { type: Boolean, default: false, required: true },
-    isActive: { type: Boolean, default: true, required: true },
     subscriptionPlan: { type: String, enum: ['free', 'premium'], default: 'free' },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     photoURL: { type: String, required: true },

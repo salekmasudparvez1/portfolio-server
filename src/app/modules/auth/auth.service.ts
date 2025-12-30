@@ -14,7 +14,7 @@ const signupFunc = async (registrationDoc: IUserCreate) => {
   // 1. Role validation: only allow 'admin' signup when a valid admin key is provided
   if (registrationDoc?.role === 'admin') {
     const providedKey = (registrationDoc as any).adminKey;
-   
+
 
     // If the server hasn't configured an admin key, signal that admin registration is disabled
     if (!config.ADMIN_REGISTRATION_KEY) {
@@ -88,7 +88,7 @@ const signupFunc = async (registrationDoc: IUserCreate) => {
 
   // send verification email (non-blocking for signup, but surface errors if they occur)
   try {
-    const sendResult = await sendVerificationCodeEmail(registrationDoc.email, code);
+    const sendResult = await sendVerificationCodeEmail(registrationDoc.email, code, registrationDoc.name);
     console.info("✅ Verification email send result during signup:", sendResult);
   } catch (err) {
     console.error("❌ Verification email failed to send during signup:", err);
@@ -125,7 +125,7 @@ const signupFunc = async (registrationDoc: IUserCreate) => {
     refreshToken,
     userInfo: {
       username: res.username,
-      name:res.name,
+      name: res.name,
       email: res.email,
       isEmailVerified: res.isEmailVerified,
       role: res.role,
@@ -146,12 +146,13 @@ const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 * - Performs case-insensitive lookup for both username and email.
 */
 
+
 const loginFunc = async (payload: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // Accept multiple possible identifier fields for flexibility
+    // 1️⃣ Validate input
     const rawIdentifier =
       (payload?.identifier ?? payload?.email ?? payload?.username)?.toString().trim();
     const password = payload?.password;
@@ -163,8 +164,7 @@ const loginFunc = async (payload: any) => {
       );
     }
 
-    // Use case-insensitive exact-match search on both email and username.
-    // Escaping prevents regex injection if identifier contains special chars.
+    // 2️⃣ Safe query: case-insensitive search
     const safe = escapeRegExp(rawIdentifier);
     const query = {
       $or: [
@@ -173,68 +173,91 @@ const loginFunc = async (payload: any) => {
       ],
     };
 
-    const user = await Auth.findOne(query).session(session);
-
+    const user = await Auth.findOne(query).select('+password').session(session);
     if (!user) {
       throw new AppError(StatusCodes.NOT_FOUND, 'User not found 😒');
     }
 
-    if (user?.isBlocked) {
+    if (!user.isEmailVerified) {
+      throw new AppError(StatusCodes.FORBIDDEN, 'User email is not verified');
+    }
+
+    if (user.isBlocked) {
       throw new AppError(StatusCodes.FORBIDDEN, 'User is blocked 🤡');
     }
-    if (!user?.password) {
+
+    if (user.password === undefined) {
+      console.log(user.password);
       throw new AppError(StatusCodes.FORBIDDEN, 'User is not valid 🚫');
     }
 
-    // Assuming Auth.isPasswordMatched(plainText, hashed) is a static helper
-    if (!(await Auth.isPasswordMatched(password, user?.password))) {
+    // 3️⃣ Verify password
+    const isPasswordValid = await Auth.isPasswordMatched(password, user?.password);
+    if (!isPasswordValid) {
       throw new AppError(StatusCodes.UNAUTHORIZED, 'Incorrect Password 😵‍💫');
     }
 
+    // 4️⃣ Prepare JWT payload (convert ObjectId to string)
     const jwtPayload = {
-      id: user._id,
-      email: user?.email,
-      role: user?.role,
-      userName: user?.username,
-      name: user?.name,
-      isEmailVerified: user?.isEmailVerified,
-      isBlocked: user?.isBlocked,
-      subscriptionPlan: user?.subscriptionPlan,
-      status: user?.status,
-      photoURL: user?.photoURL,
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      userName: user.username,
+      name: user.name,
+      isEmailVerified: user.isEmailVerified,
+      isBlocked: user.isBlocked,
+      subscriptionPlan: user.subscriptionPlan,
+      status: user.status,
+      photoURL: user.photoURL,
     };
 
-    const accessToken = generateToken(
-      jwtPayload,
-      config.jwt_access_secret as string,
-      config.jwt_access_expires_in as string
-    );
+    // 5️⃣ Ensure secrets exist
+    if (!config.jwt_access_secret || !config.jwt_refresh_secret) {
+      throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, 'JWT secrets are not configured');
+    }
 
-    const refreshToken = generateToken(
-      jwtPayload,
-      config.jwt_refresh_secret as string,
-      config.jwt_refresh_expires_in as string
-    );
+    // 6️⃣ Generate tokens safely
+    let accessToken: string;
+    let refreshToken: string;
+    try {
+      accessToken = generateToken(
+        jwtPayload,
+        config.jwt_access_secret as string,
+        config.jwt_access_expires_in as string
+      );
+      refreshToken = generateToken(
+        jwtPayload,
+        config.jwt_refresh_secret as string,
+        config.jwt_refresh_expires_in as string
+      );
+    } catch (err) {
+      console.error('JWT generation error:', err);
+      throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to generate tokens');
+    }
 
+    // 7️⃣ Commit transaction
     await session.commitTransaction();
     session.endSession();
 
+    // 8️⃣ Return response
     return {
       accessToken,
       refreshToken,
       userInfo: {
-        username: user?.username,
-        email: user?.email,
-        role: user?.role,
-        photoURL: user?.photoURL,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        photoURL: user.photoURL,
       },
     };
   } catch (error) {
+    // 9️⃣ Rollback transaction safely
     await session.abortTransaction();
     session.endSession();
     throw error;
   }
 };
+
 
 
 
@@ -358,26 +381,91 @@ const updateNameFunc = async (payload: any) => {
   }
 };
 
-// New: resend verification code function
+// Resend verification code function with rate limiting
 const resendVerificationCodeFunc = async (email: string) => {
   const user = await Auth.findOne({ email });
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
   }
+  if (user?.isEmailVerified) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Email is already verified');
+  }
+
+  const now = Date.now();
+  const expireTimeRaw = user.emailVerifyExpire;
+  if (!expireTimeRaw) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'No verification code to resend');
+  }
+
+  const expireTime = new Date(expireTimeRaw).getTime();
+  if (isNaN(expireTime)) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid verification code expiry');
+  }
+
+  // Check if the code has expired
+  if (now > expireTime) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Verification code has expired');
+  }
+  // Generate new verification code and expiry
   const { code, expires } = generateCodeVarification();
 
-  user.emailVerifyCode = code;
-  user.emailVerifyExpire = expires;
-  await user.save();
+  // Update user: code, expiry, last sent time
+  await Auth.findOneAndUpdate(
+    { email },
+    {
+      emailVerifyCode: code,
+      emailVerifyExpire: expires,
+      lastVerificationSentAt: new Date()
+    }
+  );
 
   try {
-    await sendVerificationCodeEmail(email, code);
+    await sendVerificationCodeEmail(email, code, user.name);
     return { success: true };
   } catch (err) {
     console.error("❌ Failed to resend verification code:", err);
     throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to send verification email');
   }
 };
+
+const verificationUserCodeFunc = async (email: string, emailVerifyCode: string) => {
+  const user: IUserCreate | null = await Auth.findOne({
+    email,
+  })
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+  if (user?.isEmailVerified) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Email is already verified');
+  }
+  if (user?.emailVerifyCode !== emailVerifyCode) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid verification code');
+  }
+  if (!user?.emailVerifyExpire) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Verification code has expired');
+  }
+
+  const expireTime = new Date(user.emailVerifyExpire).getTime();
+  const now = Date.now();
+
+  // Check if the code has expired
+  if (now > expireTime) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Verification code has expired');
+  }
+
+
+
+  const updatedUser: IUserCreate | null = await Auth.findOneAndUpdate(
+    { email },
+    {
+      isEmailVerified: true,
+      emailVerifyCode: null,
+      emailVerifyExpire: null
+    },
+    { new: true }
+  );
+  return updatedUser;
+}
 
 export const authService = {
   signupFunc,
@@ -388,5 +476,6 @@ export const authService = {
   updatePasswordFunc,
   getSingleUserFunc,
   updateNameFunc,
-  resendVerificationCodeFunc, // added export
+  resendVerificationCodeFunc,
+  verificationUserCodeFunc,
 };
