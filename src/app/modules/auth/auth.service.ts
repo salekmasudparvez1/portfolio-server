@@ -1,4 +1,4 @@
-import { IUserCreate, TLoginUser } from './auth.interface';
+import { IRegisterDoc, IUserCreate, TLoginUser } from './auth.interface';
 
 import AppError from '../../errors/AppError';
 import { StatusCodes } from 'http-status-codes';
@@ -10,7 +10,7 @@ import generateCodeVarification from '../../utils/generateCodeVarification';
 import { sendVerificationCodeEmail } from '../../utils/sendEmail';
 import { Auth } from './auth.model';
 
-const signupFunc = async (registrationDoc: IUserCreate) => {
+const signupFunc = async (registrationDoc: IRegisterDoc) => {
   // 1. Role validation: only allow 'admin' signup when a valid admin key is provided
   if (registrationDoc?.role === 'admin') {
     const providedKey = (registrationDoc as any).adminKey;
@@ -99,6 +99,7 @@ const signupFunc = async (registrationDoc: IUserCreate) => {
   const jwtPayload = {
     id: res._id,
     email: res?.email,
+    name: res?.name,
     userName: res?.username,
     role: res?.role,
     isBlocked: res?.isBlocked,
@@ -178,9 +179,9 @@ const loginFunc = async (payload: any) => {
       throw new AppError(StatusCodes.NOT_FOUND, 'User not found 😒');
     }
 
-    if (!user.isEmailVerified) {
-      throw new AppError(StatusCodes.FORBIDDEN, 'User email is not verified');
-    }
+    // if (!user.isEmailVerified) {
+    //   throw new AppError(StatusCodes.FORBIDDEN, 'User email is not verified');
+    // }
 
     if (user.isBlocked) {
       throw new AppError(StatusCodes.FORBIDDEN, 'User is blocked 🤡');
@@ -199,16 +200,16 @@ const loginFunc = async (payload: any) => {
 
     // 4️⃣ Prepare JWT payload (convert ObjectId to string)
     const jwtPayload = {
-      id: user._id.toString(),
-      email: user.email,
-      role: user.role,
-      userName: user.username,
-      name: user.name,
-      isEmailVerified: user.isEmailVerified,
-      isBlocked: user.isBlocked,
-      subscriptionPlan: user.subscriptionPlan,
-      status: user.status,
-      photoURL: user.photoURL,
+      id: user?._id?.toString(),
+      email: user?.email,
+      role: user?.role,
+      userName: user?.username,
+      name: user?.name,
+      isEmailVerified: user?.isEmailVerified,
+      isBlocked: user?.isBlocked,
+      subscriptionPlan: user?.subscriptionPlan,
+      status: user?.status,
+      photoURL: user?.photoURL,
     };
 
     // 5️⃣ Ensure secrets exist
@@ -258,9 +259,6 @@ const loginFunc = async (payload: any) => {
   }
 };
 
-
-
-
 const updateUserFunc = async (payload: IUserCreate) => {
 
   const user = await Auth.findOne({ email: payload?.email });
@@ -276,14 +274,18 @@ interface TUpdateDoc {
   action: string
 }
 
+
 const getProfileInfoFunc = async (req: Request) => {
   const payload = (req as any).user
   if (!payload?.email) {
     throw new AppError(StatusCodes.UNAUTHORIZED, 'User not found');
   }
-  const user = await Auth.findOne({ email: payload?.email });
+  const user = await Auth.findOne({ email: payload?.email }).lean().select('-password -emailVerifyCode ');
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+  if (user?.isBlocked) {
+    throw new AppError(StatusCodes.FORBIDDEN, 'Account is blocked');
   }
 
   return user;

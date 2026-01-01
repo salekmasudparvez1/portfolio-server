@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { Document, Model, Types } from 'mongoose';
 
+
 export interface IUserCreate extends Document {
   name: string;
   username: string;
@@ -10,15 +11,33 @@ export interface IUserCreate extends Document {
   role: 'admin' | 'user';
   isBlocked: boolean;
   photoURL: string;
-  region: string;
   status: 'pending' | 'approved' | 'rejected';
   subscriptionPlan: 'free' | 'premium';
+  region?: string;
+  device?: string;
+  bio?: string;
 
   isEmailVerified: boolean;
   emailVerifyCode?: string;
   emailVerifyExpire?: Date;
 }
 
+export type IRegisterDoc = Pick<
+  IUserCreate,
+  'name' |
+  'username' |
+  'email' |
+  'phoneNumber' |
+  'password' |
+  'isBlocked' |
+  'photoURL' |
+  'role'|
+  'emailVerifyCode'|
+  'emailVerifyExpire'|
+  'isEmailVerified' |
+  'region'|
+  'device'
+>
 
 export type TSignupModel = Model<IUserCreate> & {
   isPasswordMatched(

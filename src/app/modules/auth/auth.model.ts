@@ -7,7 +7,6 @@ import { StatusCodes } from 'http-status-codes';
 
 
 
-
 const authSchema = new Schema(
   {
     name: { type: String, required: true },
@@ -21,6 +20,8 @@ const authSchema = new Schema(
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     photoURL: { type: String, required: true },
     region: { type: String, required: true },
+    device: { type: String, required: true },
+    bio: { type: String, default: '', maxLength: 500 },
 
     isEmailVerified: { type: Boolean, default: false },
     emailVerifyCode: String,

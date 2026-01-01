@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { de } from "zod/v4/locales";
 
 
 export const signupValidationSchema = z.object({
@@ -10,17 +11,19 @@ export const signupValidationSchema = z.object({
         phoneNumber: z
             .string()
             .min(10, { message: 'Phone number must be at least 10 digits' })
-            .regex(/^\d+$/, { message: 'Phone number must contain only digits' }),
+            .regex(/^\+?\d+$/, { message: "Phone number must contain only digits and may start with '+'" }),
         password: z.string().min(6, { message: 'Password must be at least 6 characters' }).optional(),
-        // role is optional for public signup and will default to 'user'
+        // role is optional for public signup and will default to 'user'z
         role: z.enum(['admin', 'user']).optional().default('user'),
         // optional secret to allow admin registration when matched with server env var
         adminKey: z.string().optional(),
         isBlocked: z.boolean().optional().default(false),
         photoURL: z.string().url({ message: 'Invalid photo URL' }).optional(),
         region: z.string().optional(),
+        device: z.string().optional(),
         status: z.enum(['pending', 'approved', 'rejected']).optional().default('pending'),
         subscriptionPlan: z.enum(['free', 'premium']).optional().default('free'),
+        bio: z.string().max(500).optional().default(''),
 
         isEmailVerified: z.boolean().optional().default(false),
         emailVerifyCode: z.string().optional(),

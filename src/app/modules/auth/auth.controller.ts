@@ -4,16 +4,29 @@ import { authService } from './auth.service';
 import sendResponse from '../../utils/sendResponse';
 import StatusCodes from 'http-status-codes';
 import config from '../../config';
+import { da } from 'zod/v4/locales';
+import { IRegisterDoc } from './auth.interface';
+
 
 const signup = catchAsync(async (req: Request, res: Response) => {
-  console.log("req.body:", req.body);
-  const getDoc = req.body;
+  const data = req.body;
+  const getDoc = {
+    name: data?.name,
+    username: data?.username,
+    email: data?.email,
+    phoneNumber: data?.phoneNumber,
+    password: data?.password,
+    role: data?.role || "user",
+    photoURL: data?.photoURL || "https://res.cloudinary.com/dncnvqrc6/image/upload/v1740454884/untitled.png",
+    isBlocked: false,
+    region: data?.region || "Not Specified",
+    device: data?.device || "Not Specified",
+    isEmailVerified: false,
+  };
 
-
-
-  const result = await authService.signupFunc(getDoc);
+  const result = await authService.signupFunc(getDoc as IRegisterDoc);
   res.cookie("refreshToken", result.refreshToken, {
-    secure: config.NODE_ENV === "production",
+    secure: config.NODE_ENV === "production", 
     httpOnly: true,
     sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24 * 365,
@@ -48,8 +61,7 @@ const verificationUserCode = catchAsync(async (req: Request, res: Response) => {
 
 const login = catchAsync(async (req: Request, res: Response) => {
   const result = await authService.loginFunc(req.body);
-
-  const { accessToken, refreshToken } = result;
+  const {  refreshToken } = result;
   res.cookie('refreshToken', refreshToken, {
     secure: config.NODE_ENV === 'production',
     httpOnly: true,
