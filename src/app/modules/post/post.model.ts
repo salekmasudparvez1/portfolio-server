@@ -85,7 +85,7 @@ const postSchema = new Schema<IPost>(
 );
 
 // Indexes
-postSchema.index({ slug: 1 });
+// Note: slug index is already created by unique: true in schema, so we don't need to add it here
 postSchema.index({ type: 1, isPublished: 1 });
 postSchema.index({ tags: 1 });
 postSchema.index({ isFeatured: 1 });

@@ -19,8 +19,9 @@ cloudinary.config({
 
 // 2. MULTER STORAGE CONFIG
 // We must save files to disk first so Cloudinary can read them from a path.
+// Use /tmp for serverless environments (Vercel, AWS Lambda) where file system is read-only
 const upload = multer({ 
-    dest: 'uploads/tmp/', // Ensure this folder exists or is created
+    dest: '/tmp/uploads/', // Use /tmp for serverless compatibility
     limits: { fileSize: 10 * 1024 * 1024 } // Optional: Limit file size to 10MB
 });
 
