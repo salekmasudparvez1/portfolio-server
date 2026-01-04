@@ -54,6 +54,8 @@ const authSchema = new mongoose_1.Schema({
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     photoURL: { type: String, required: true },
     region: { type: String, required: true },
+    device: { type: String, required: true },
+    bio: { type: String, default: '', maxLength: 500 },
     isEmailVerified: { type: Boolean, default: false },
     emailVerifyCode: String,
     emailVerifyExpire: Date

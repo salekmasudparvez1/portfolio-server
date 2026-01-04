@@ -4,7 +4,6 @@ import { authService } from './auth.service';
 import sendResponse from '../../utils/sendResponse';
 import StatusCodes from 'http-status-codes';
 import config from '../../config';
-import { da } from 'zod/v4/locales';
 import { IRegisterDoc } from './auth.interface';
 
 
@@ -25,12 +24,7 @@ const signup = catchAsync(async (req: Request, res: Response) => {
   };
 
   const result = await authService.signupFunc(getDoc as IRegisterDoc);
-  res.cookie("refreshToken", result.refreshToken, {
-    secure: config.NODE_ENV === "production", 
-    httpOnly: true,
-    sameSite: "none",
-    maxAge: 1000 * 60 * 60 * 24 * 365,
-  });
+
   sendResponse(res, {
     success: true,
     message: 'User sign up successfully',

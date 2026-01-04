@@ -14,6 +14,7 @@ export declare const signupValidationSchema: z.ZodObject<{
         isBlocked: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
         photoURL: z.ZodOptional<z.ZodString>;
         region: z.ZodOptional<z.ZodString>;
+        device: z.ZodOptional<z.ZodString>;
         status: z.ZodDefault<z.ZodOptional<z.ZodEnum<{
             pending: "pending";
             approved: "approved";
@@ -23,6 +24,7 @@ export declare const signupValidationSchema: z.ZodObject<{
             free: "free";
             premium: "premium";
         }>>>;
+        bio: z.ZodDefault<z.ZodOptional<z.ZodString>>;
         isEmailVerified: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
         emailVerifyCode: z.ZodOptional<z.ZodString>;
         emailVerifyExpire: z.ZodOptional<z.ZodDate>;

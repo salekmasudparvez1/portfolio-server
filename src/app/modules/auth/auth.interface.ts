@@ -6,6 +6,7 @@ export interface IUserCreate extends Document {
   name: string;
   username: string;
   email: string;
+  signInMethod?: 'email' | 'google' | 'github';
   phoneNumber: string;
   password?: string;
   role: 'admin' | 'user';
@@ -36,7 +37,8 @@ export type IRegisterDoc = Pick<
   'emailVerifyExpire'|
   'isEmailVerified' |
   'region'|
-  'device'
+  'device'|
+  'signInMethod'
 >
 
 export type TSignupModel = Model<IUserCreate> & {

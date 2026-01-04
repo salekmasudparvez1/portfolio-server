@@ -188,7 +188,7 @@ const loginFunc = async (payload: any) => {
     }
 
     if (user.password === undefined) {
-    
+
       throw new AppError(StatusCodes.FORBIDDEN, 'User is not valid 🚫');
     }
 

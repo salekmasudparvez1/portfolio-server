@@ -10,8 +10,20 @@ const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const config_1 = __importDefault(require("../../config"));
 const signup = (0, catchAsync_1.default)(async (req, res) => {
-    console.log("req.body:", req.body);
-    const getDoc = req.body;
+    const data = req.body;
+    const getDoc = {
+        name: data?.name,
+        username: data?.username,
+        email: data?.email,
+        phoneNumber: data?.phoneNumber,
+        password: data?.password,
+        role: data?.role || "user",
+        photoURL: data?.photoURL || "https://res.cloudinary.com/dncnvqrc6/image/upload/v1740454884/untitled.png",
+        isBlocked: false,
+        region: data?.region || "Not Specified",
+        device: data?.device || "Not Specified",
+        isEmailVerified: false,
+    };
     const result = await auth_service_1.authService.signupFunc(getDoc);
     res.cookie("refreshToken", result.refreshToken, {
         secure: config_1.default.NODE_ENV === "production",
@@ -48,7 +60,7 @@ const verificationUserCode = (0, catchAsync_1.default)(async (req, res) => {
 });
 const login = (0, catchAsync_1.default)(async (req, res) => {
     const result = await auth_service_1.authService.loginFunc(req.body);
-    const { accessToken, refreshToken } = result;
+    const { refreshToken } = result;
     res.cookie('refreshToken', refreshToken, {
         secure: config_1.default.NODE_ENV === 'production',
         httpOnly: true,

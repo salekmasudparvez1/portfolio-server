@@ -1,11 +1,11 @@
-import { IUserCreate } from './auth.interface';
+import { IRegisterDoc, IUserCreate } from './auth.interface';
 import mongoose from 'mongoose';
 interface TUpdateDoc {
     id: string;
     action: string;
 }
 export declare const authService: {
-    signupFunc: (registrationDoc: IUserCreate) => Promise<{
+    signupFunc: (registrationDoc: IRegisterDoc) => Promise<{
         accessToken: string;
         refreshToken: string;
         userInfo: {
@@ -30,7 +30,7 @@ export declare const authService: {
             photoURL: string;
         };
     }>;
-    getProfileInfoFunc: (req: Request) => Promise<mongoose.Document<unknown, {}, IUserCreate, {}, mongoose.DefaultSchemaOptions> & IUserCreate & Required<{
+    getProfileInfoFunc: (req: Request) => Promise<IUserCreate & Required<{
         _id: mongoose.Types.ObjectId;
     }> & {
         __v: number;

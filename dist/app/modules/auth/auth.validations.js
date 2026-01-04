@@ -10,17 +10,19 @@ exports.signupValidationSchema = zod_1.z.object({
         phoneNumber: zod_1.z
             .string()
             .min(10, { message: 'Phone number must be at least 10 digits' })
-            .regex(/^\d+$/, { message: 'Phone number must contain only digits' }),
+            .regex(/^\+?\d+$/, { message: "Phone number must contain only digits and may start with '+'" }),
         password: zod_1.z.string().min(6, { message: 'Password must be at least 6 characters' }).optional(),
-        // role is optional for public signup and will default to 'user'
+        // role is optional for public signup and will default to 'user'z
         role: zod_1.z.enum(['admin', 'user']).optional().default('user'),
         // optional secret to allow admin registration when matched with server env var
         adminKey: zod_1.z.string().optional(),
         isBlocked: zod_1.z.boolean().optional().default(false),
         photoURL: zod_1.z.string().url({ message: 'Invalid photo URL' }).optional(),
         region: zod_1.z.string().optional(),
+        device: zod_1.z.string().optional(),
         status: zod_1.z.enum(['pending', 'approved', 'rejected']).optional().default('pending'),
         subscriptionPlan: zod_1.z.enum(['free', 'premium']).optional().default('free'),
+        bio: zod_1.z.string().max(500).optional().default(''),
         isEmailVerified: zod_1.z.boolean().optional().default(false),
         emailVerifyCode: zod_1.z.string().optional(),
         emailVerifyExpire: zod_1.z.date().optional(),

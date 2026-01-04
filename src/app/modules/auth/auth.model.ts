@@ -12,8 +12,9 @@ const authSchema = new Schema(
     name: { type: String, required: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    phoneNumber: { type: String, required: true, unique: true },
-    password: { type: String, select: false },
+    signInMethod: { type: String, enum: ['email', 'google', 'github'], required: false, default: 'email' },
+    phoneNumber: { type: String, unique: true, default: null },
+    password: { type: String, select: false, default: null },
     role: { type: String, enum: ['admin', 'user'], required: true },
     isBlocked: { type: Boolean, default: false, required: true },
     subscriptionPlan: { type: String, enum: ['free', 'premium'], default: 'free' },
@@ -36,13 +37,15 @@ const authSchema = new Schema(
 authSchema.pre('save', async function () {
 
   const data = this;
-  if (!data.password) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Password is required');
+  // if (!data.password) {
+  //   throw new AppError(StatusCodes.BAD_REQUEST, 'Password is required');
+  // }
+  if (data.password) {
+    data.password = await bcrypt.hash(
+      data.password,
+      Number(config.bcrypt_salt_rounds),
+    );
   }
-  data.password = await bcrypt.hash(
-    data.password,
-    Number(config.bcrypt_salt_rounds),
-  );
 });
 authSchema.statics.isPasswordMatched = async function (
   plainTextPassword,

@@ -8,13 +8,16 @@ export interface IUserCreate extends Document {
     role: 'admin' | 'user';
     isBlocked: boolean;
     photoURL: string;
-    region: string;
     status: 'pending' | 'approved' | 'rejected';
     subscriptionPlan: 'free' | 'premium';
+    region?: string;
+    device?: string;
+    bio?: string;
     isEmailVerified: boolean;
     emailVerifyCode?: string;
     emailVerifyExpire?: Date;
 }
+export type IRegisterDoc = Pick<IUserCreate, 'name' | 'username' | 'email' | 'phoneNumber' | 'password' | 'isBlocked' | 'photoURL' | 'role' | 'emailVerifyCode' | 'emailVerifyExpire' | 'isEmailVerified' | 'region' | 'device'>;
 export type TSignupModel = Model<IUserCreate> & {
     isPasswordMatched(plainTextPassword: string, hashedPassword: string): Promise<boolean>;
     isUserExistsByCustomId(email: string): Promise<IUserCreate | null>;

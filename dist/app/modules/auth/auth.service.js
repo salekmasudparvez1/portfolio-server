@@ -89,6 +89,7 @@ const signupFunc = async (registrationDoc) => {
     const jwtPayload = {
         id: res._id,
         email: res?.email,
+        name: res?.name,
         userName: res?.username,
         role: res?.role,
         isBlocked: res?.isBlocked,
@@ -144,14 +145,13 @@ const loginFunc = async (payload) => {
         if (!user) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found 😒');
         }
-        if (!user.isEmailVerified) {
-            throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User email is not verified');
-        }
+        // if (!user.isEmailVerified) {
+        //   throw new AppError(StatusCodes.FORBIDDEN, 'User email is not verified');
+        // }
         if (user.isBlocked) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User is blocked 🤡');
         }
         if (user.password === undefined) {
-            console.log(user.password);
             throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User is not valid 🚫');
         }
         // 3️⃣ Verify password
@@ -161,16 +161,16 @@ const loginFunc = async (payload) => {
         }
         // 4️⃣ Prepare JWT payload (convert ObjectId to string)
         const jwtPayload = {
-            id: user._id.toString(),
-            email: user.email,
-            role: user.role,
-            userName: user.username,
-            name: user.name,
-            isEmailVerified: user.isEmailVerified,
-            isBlocked: user.isBlocked,
-            subscriptionPlan: user.subscriptionPlan,
-            status: user.status,
-            photoURL: user.photoURL,
+            id: user?._id?.toString(),
+            email: user?.email,
+            role: user?.role,
+            userName: user?.username,
+            name: user?.name,
+            isEmailVerified: user?.isEmailVerified,
+            isBlocked: user?.isBlocked,
+            subscriptionPlan: user?.subscriptionPlan,
+            status: user?.status,
+            photoURL: user?.photoURL,
         };
         // 5️⃣ Ensure secrets exist
         if (!config_1.default.jwt_access_secret || !config_1.default.jwt_refresh_secret) {
@@ -222,9 +222,12 @@ const getProfileInfoFunc = async (req) => {
     if (!payload?.email) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'User not found');
     }
-    const user = await auth_model_1.Auth.findOne({ email: payload?.email });
+    const user = await auth_model_1.Auth.findOne({ email: payload?.email }).lean().select('-password -emailVerifyCode ');
     if (!user) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found');
+    }
+    if (user?.isBlocked) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'Account is blocked');
     }
     return user;
 };
