@@ -2,14 +2,61 @@ import httpStatus from "http-status";
 import AppError from "../../errors/AppError";
 import { IPost } from "./post.interface";
 import { Post } from "./post.model";
+import { Request } from "express";
 
-const createPost = async (payload: IPost) => {
-  // Check if slug already exists
+const safeParse = <T>(value: unknown, fallback: T): T => {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value !== "string") return value as T;
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+const createPost = async (req: Request) => {
+  const payload: IPost = req.body;
+  const user = (req as any)?.user;
+
+  const seoDoc = safeParse<Record<string, any>>(payload?.seo, {});
+
+  const finalDocument = {
+    title: payload?.title,
+    slug: payload?.slug,
+    type: payload?.type,
+    excerpt: payload?.excerpt,
+    content: payload?.content,
+
+    tags: safeParse<string[]>(payload?.tags, []),
+    projectLinks: safeParse<Record<string, any>>(payload?.projectLinks, {}),
+
+    isPublished: safeParse<boolean>(payload?.isPublished, false),
+    isFeatured: safeParse<boolean>(payload?.isFeatured, false),
+
+    seo: {
+      ...seoDoc,
+      ...(payload?.seo?.ogImage && { ogImage: payload?.seo?.ogImage }),
+    },
+
+    author: payload?.author,
+    coverImage: payload?.coverImage,
+    gallery: payload?.gallery,
+
+    publishedAt: payload?.publishedAt
+      ? new Date(payload.publishedAt)
+      : undefined,
+
+    readingTime: payload?.readingTime
+      ? Number(payload.readingTime)
+      : undefined,
+  };
+
   const existingPost = await Post.findOne({ slug: payload.slug });
+
   if (existingPost) {
     throw new AppError(httpStatus.CONFLICT, "Slug already exists");
   }
- 
+
   const result = await Post.create(payload);
   return result;
 };
@@ -44,7 +91,7 @@ const getAllPosts = async (query: Record<string, any>) => {
   }
 
   const skip = (Number(page) - 1) * Number(limit);
-  console.log(filter);
+
   const [posts, total] = await Promise.all([
     Post.find(filter)
       .sort(sort)
@@ -92,15 +139,16 @@ const updatePost = async (id: string, payload: Partial<IPost>) => {
       throw new AppError(httpStatus.CONFLICT, "Slug already exists");
     }
   }
-
+  console.log(payload);
   const result = await Post.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
   });
-
+  console.log(result);
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, "Post not found");
   }
+
 
   return result;
 };

@@ -28,6 +28,9 @@ router.post(
 router.patch(
     "/:id",
     verifyAdmin,
+    verifyAdmin,
+    uploadMixed, 
+    processPostImages, 
     validateRequest(PostValidations.updatePostValidation),
     PostController.updatePost
 );

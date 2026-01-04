@@ -1,33 +1,66 @@
 import { z } from "zod";
 
-// --- HELPERS ---
+/* -----------------------------------------------------
+   1. REUSABLE HELPERS
+----------------------------------------------------- */
 
-// 1. Handle JSON Strings (e.g. '{"live": "..."}' -> Object)
-const processJson = (schema: z.ZodTypeAny) =>
-  z.preprocess((value) => {
-    if (typeof value === "string" && value.trim().length > 0) {
-      try {
-        return JSON.parse(value);
-      } catch (e) {
-        return value;
-      }
-    }
-    return value;
-  }, schema);
-
-// 2. Handle Boolean Strings ("true" -> true)
-const booleanString = z.preprocess((val) => {
-    if (typeof val === "string") return val === "true";
-    return Boolean(val);
-}, z.boolean());
-
-// 3. Handle Empty Strings for URLs ("" -> undefined) so .url() validation doesn't fail
+// Empty string → undefined (useful for optional URL inputs)
 const emptyStringUrl = z.preprocess(
   (val) => (val === "" ? undefined : val),
   z.string().url({ message: "Invalid URL format" }).optional()
 );
 
-// --- SUB SCHEMAS ---
+// "true" | "false" | boolean → boolean
+const booleanString = z.preprocess((val) => {
+  if (typeof val === "string") {
+    if (val === "true") return true;
+    if (val === "false") return false;
+  }
+  return val;
+}, z.boolean());
+
+// string → number
+const numberString = z.preprocess(
+  (val) => {
+    if (val === "" || val === undefined || val === null) return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  },
+  z.number().nonnegative().optional()
+);
+
+// Parse JSON strings safely
+const jsonPreprocess = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((val) => {
+    if (typeof val === "string") {
+      try {
+        return JSON.parse(val);
+      } catch {
+        return val;
+      }
+    }
+    return val;
+  }, schema);
+
+// Convert string or array to array (for form-data fields like keywords, tags)
+const stringToArray = z.preprocess((val) => {
+  if (typeof val === "string") {
+    try {
+      // Try parsing as JSON array first
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // If not JSON, split by comma
+      return val.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+  }
+  if (Array.isArray(val)) return val;
+  return undefined;
+}, z.array(z.string()).optional());
+
+/* -----------------------------------------------------
+   2. SUB SCHEMAS
+----------------------------------------------------- */
 
 const projectLinksSchema = z.object({
   live: emptyStringUrl,
@@ -37,85 +70,69 @@ const projectLinksSchema = z.object({
 
 const seoSchema = z.object({
   metaTitle: z.string().optional(),
-  metaDescription: z.string().max(160, "Description cannot exceed 160 characters").optional(),
-  keywords: z.array(z.string()).optional(),
+  metaDescription: z
+    .string()
+    .max(160, "Description cannot exceed 160 characters")
+    .optional(),
+  keywords: stringToArray,
   canonicalUrl: emptyStringUrl,
-  ogImage: emptyStringUrl, 
+  ogImage: emptyStringUrl,
 });
 
-// --- MAIN SCHEMAS ---
+/* -----------------------------------------------------
+   3. BASE POST SCHEMA
+----------------------------------------------------- */
+
+export const basePostSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  slug: z.string().min(1, "Slug is required").trim(),
+  type: z.enum(["project", "blog"]),
+
+  excerpt: z
+    .string()
+    .min(1, "Excerpt is required")
+    .max(300, "Excerpt cannot exceed 300 characters"),
+
+  content: z.string().min(1, "Content is required"),
+  author: z.string().min(1, "Author is required"),
+
+  // Media
+  coverImage: emptyStringUrl,
+  gallery: jsonPreprocess(z.array(z.string().url()).optional()),
+
+  // Tags
+  tags: jsonPreprocess(
+    z.array(z.string()).min(1, "At least one tag is required")
+  ),
+
+  // Nested objects
+  projectLinks: jsonPreprocess(projectLinksSchema).optional(),
+  seo: jsonPreprocess(seoSchema).optional(),
+
+  // Flags
+  isFeatured: booleanString.default(false),
+  isPublished: booleanString.default(false),
+
+  // Publishing
+  publishedAt: z.string().optional(),
+  readingTime: numberString,
+});
+
+/* -----------------------------------------------------
+   4. REQUEST VALIDATIONS
+----------------------------------------------------- */
 
 export const createPostValidation = z.object({
-  body: z.object({
-    title: z.string().min(1, "Title is required"),
-    slug: z.string().min(1, "Slug is required").trim(),
-    type: z.enum(["project", "blog"]),
-    excerpt: z.string().min(1, "Excerpt is required"),
-    content: z.string().min(1, "Content is required"),
-    
-    // Allow empty string or valid URL
-    coverImage: emptyStringUrl,
-    
-    // Expect array of strings, ensure URLs
-    gallery: z.array(z.string().url()).optional(),
-    
-    // Handle tags (could be array or stringified array)
-    tags: z.preprocess((val) => {
-        if (typeof val === 'string') {
-            try { return JSON.parse(val); } catch { return [val]; } 
-        }
-        return val;
-    }, z.array(z.string()).min(1, "At least one tag is required")),
-
-    // Process JSON strings for nested objects
-    projectLinks: processJson(projectLinksSchema).optional(),
-    seo: processJson(seoSchema).optional(),
-
-    // Author is usually a MongoDB ID string
-    author: z.string().min(1, "Author is required"),
-
-    // Process booleans
-    isFeatured: booleanString.optional().default(false),
-    isPublished: booleanString.optional().default(false),
-    
-    publishedAt: z.string().optional(), // ISO String preferred
-    readingTime: z.preprocess(
-        (val) => Number(val), 
-        z.number().nonnegative().optional()
-    ).optional(),
-  }),
+  body: basePostSchema,
 });
 
 export const updatePostValidation = z.object({
-  body: z.object({
-    title: z.string().min(1).optional(),
-    slug: z.string().min(1).optional(),
-    type: z.enum(["project", "blog"]).optional(),
-    excerpt: z.string().min(1).optional(),
-    content: z.string().min(1).optional(),
-    coverImage: emptyStringUrl,
-    gallery: z.array(z.string().url()).optional(),
-    
-    tags: z.preprocess((val) => {
-        if (typeof val === 'string') {
-            try { return JSON.parse(val); } catch { return [val]; }
-        } 
-        return val;
-    }, z.array(z.string()).optional()),
-
-    projectLinks: processJson(projectLinksSchema).optional(),
-    seo: processJson(seoSchema).optional(),
-    
-    author: z.string().min(1).optional(),
-    isFeatured: booleanString.optional(),
-    isPublished: booleanString.optional(),
-    publishedAt: z.string().optional(),
-    readingTime: z.preprocess(
-        (val) => (val ? Number(val) : undefined),
-        z.number().nonnegative().optional()
-    ),
-  }),
+  body: basePostSchema.partial(),
 });
+
+/* -----------------------------------------------------
+   5. EXPORT
+----------------------------------------------------- */
 
 export const PostValidations = {
   createPostValidation,

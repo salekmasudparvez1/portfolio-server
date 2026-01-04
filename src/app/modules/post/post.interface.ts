@@ -8,7 +8,7 @@ export interface IPost {
   
   // Content
   excerpt: string;
-  content: string; // Markdown/MDX/HTML
+  content: string; 
   coverImage: string;
   gallery?: string[]; // Extra project screenshots
   

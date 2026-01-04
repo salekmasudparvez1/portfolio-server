@@ -2,9 +2,10 @@ import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { PostService } from "./post.service";
+import { Request } from "express";
 
 const createPost = catchAsync(async (req, res) => {
-  const result = await PostService.createPost(req.body);
+  const result = await PostService.createPost( req as Request);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -15,9 +16,9 @@ const createPost = catchAsync(async (req, res) => {
 });
 
 const getAllPosts = catchAsync(async (req, res) => {
- 
+
   const result = await PostService.getAllPosts(req.query);
- 
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

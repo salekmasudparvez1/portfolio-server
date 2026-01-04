@@ -90,7 +90,7 @@ const WebhookFunc = async (rawBody, signatureHeader) => {
     try {
         const payload = rawBody instanceof Buffer ? rawBody : Buffer.from(rawBody);
         event = stripe.webhooks.constructEvent(payload, signatureHeader || "", endpointSecret);
-        console.log("✅ Stripe webhook event constructed:", event.type);
+      
     }
     catch (err) {
         console.error("❌ Stripe webhook signature verification failed:", err);
@@ -100,14 +100,13 @@ const WebhookFunc = async (rawBody, signatureHeader) => {
         switch (event.type) {
             case "payment_intent.succeeded": {
                 const paymentIntent = event.data.object;
-                console.log("💰 paymentIntent received:", paymentIntent);
                 const requestId = paymentIntent.metadata?.requestId;
                 if (!requestId) {
                     throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Missing requestId in paymentIntent requestId metadata");
                 }
                 // Check if transaction already exists
                 const alreadyExists = await pay_model_1.PayModel.findOne({ transactionId: paymentIntent.id });
-                console.log("🔍 Transaction exists check:", alreadyExists);
+              
                 if (alreadyExists) {
                     throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Transaction already recorded");
                 }
@@ -145,7 +144,7 @@ const WebhookFunc = async (rawBody, signatureHeader) => {
                     throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Missing requestId in paymentIntent metadata");
                 }
                 const exists = await pay_model_1.PayModel.findOne({ transactionId: paymentIntent.id });
-                console.log("🔍 Transaction exists check (failed):", exists);
+            
                 if (exists) {
                     throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Transaction already recorded");
                 }
@@ -160,7 +159,7 @@ const WebhookFunc = async (rawBody, signatureHeader) => {
                     requestId: new mongoose_1.Types.ObjectId(requestId),
                 });
                 await tenent_model_1.TenantApplicationModel.findByIdAndUpdate(requestId, { paymentStatus: "FAILED" });
-                console.log("✅ TenantApplicationModel updated to FAILED");
+             
                 break;
             }
             default:
@@ -306,7 +305,6 @@ const getSingleTenantTransactionsFunc = async (req) => {
     if (!mongoose_1.Types.ObjectId.isValid(id)) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Invalid tenant id');
     }
-    console.log("🚀 ~ file: pay.service.ts:326 ~ getSingleTenantTransactionsFunc ~ rawUser:", rawUser, id);
     // use findById since `id` is validated
     const transactions = await pay_model_1.PayModel.findById(id).populate({
         path: "requestId",
