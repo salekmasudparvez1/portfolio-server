@@ -6,9 +6,9 @@ export interface IUserCreate extends Document {
   name: string;
   username: string;
   email: string;
-  signInMethod?: 'email' | 'google' | 'github';
+  signInMethod?: 'email' | 'google' | 'github' | 'unknown';
   phoneNumber: string;
-  password?: string;
+  password?: string | null;
   role: 'admin' | 'user';
   isBlocked: boolean;
   photoURL: string;

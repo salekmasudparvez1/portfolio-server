@@ -12,7 +12,7 @@ const authSchema = new Schema(
     name: { type: String, required: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    signInMethod: { type: String, enum: ['email', 'google', 'github'], required: false, default: 'email' },
+    signInMethod: { type: String, enum: ['email', 'google', 'github', 'unknown'], required: false, default: 'email' },
     phoneNumber: { type: String, unique: true, default: null },
     password: { type: String, select: false, default: null },
     role: { type: String, enum: ['admin', 'user'], required: true },

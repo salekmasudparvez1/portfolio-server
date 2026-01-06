@@ -21,9 +21,16 @@ const signup = catchAsync(async (req: Request, res: Response) => {
     region: data?.region || "Not Specified",
     device: data?.device || "Not Specified",
     isEmailVerified: false,
+    signInMethod: 'email',
   };
 
   const result = await authService.signupFunc(getDoc as IRegisterDoc);
+  res.cookie('refreshToken', result.refreshToken, {
+    secure: config.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+  });
 
   sendResponse(res, {
     success: true,
@@ -32,6 +39,61 @@ const signup = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.ACCEPTED,
   });
 });
+
+const signupWithProvider = catchAsync(async (req: Request, res: Response) => {
+  const data = req.body;
+  const getDoc = {
+    name: data?.name,
+    username: data?.username,
+    email: data?.email,
+    phoneNumber: data?.phoneNumber || "Not Specified",
+    password: data?.password || "Not Specified",
+    role: data?.role || "user",
+    photoURL: data?.photoURL || "https://res.cloudinary.com/dncnvqrc6/image/upload/v1740454884/untitled.png",
+    isBlocked: false,
+    region: data?.region || "Not Specified",
+    device: data?.device || "Not Specified",
+    isEmailVerified: true,
+    signInMethod: data?.signInMethod || 'unknown',
+  };
+
+  const result = await authService.signupWithProviderfunc(getDoc as IRegisterDoc);
+
+  res.cookie('refreshToken', result?.refreshToken, {
+    secure: config.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+  });
+
+  sendResponse(res, {
+    success: true,
+    message: 'User sign up with provider successfully',
+    data: result?.userInfo,
+    statusCode: StatusCodes.ACCEPTED,
+  });
+});
+
+const signInWithProvider = catchAsync(async (req: Request, res: Response) => {
+  const data = req.body;
+
+  const result = await authService.signInWithProviderfunc(data);
+
+  res.cookie('refreshToken', result?.refreshToken, {
+    secure: config.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+  });
+
+  sendResponse(res, {
+    success: true,
+    message: 'User sign in with provider successfully',
+    data: result?.userInfo,
+    statusCode: StatusCodes.OK,
+  });
+});
+
 const resendVerificationCode = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
   const result = await authService.resendVerificationCodeFunc(email);
@@ -42,6 +104,7 @@ const resendVerificationCode = catchAsync(async (req: Request, res: Response) =>
     statusCode: StatusCodes.OK,
   });
 });
+
 const verificationUserCode = catchAsync(async (req: Request, res: Response) => {
   const { email, emailVerifyCode } = req.body;
   const result = await authService.verificationUserCodeFunc(email, emailVerifyCode);
@@ -55,7 +118,7 @@ const verificationUserCode = catchAsync(async (req: Request, res: Response) => {
 
 const login = catchAsync(async (req: Request, res: Response) => {
   const result = await authService.loginFunc(req.body);
-  const {  refreshToken } = result;
+  const { refreshToken } = result;
   res.cookie('refreshToken', refreshToken, {
     secure: config.NODE_ENV === 'production',
     httpOnly: true,
@@ -143,7 +206,9 @@ export const authController = {
   signup,
   resendVerificationCode,
   verificationUserCode,
+  signInWithProvider,
   login,
+  signupWithProvider,
   getProfileInfo,
   updateUser,
 

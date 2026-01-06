@@ -7,7 +7,9 @@ import verifyUser from "../../middlewares/verifyUser";
 
 
 const authRouter = Router()
-authRouter.post('/signup', validateRequest(signupValidationSchema), authController.signup);
+authRouter.post('/signup', validateRequest(signupValidationSchema), authController.signup);//email
+authRouter.post('/signup-with-provider', authController.signupWithProvider);
+authRouter.post('/sign-in-with-provider', authController.signInWithProvider);
 authRouter.post('/resend-verification-code',verifyUser, authController.resendVerificationCode);
 authRouter.post('/verify-user-code', verifyUser,authController.verificationUserCode);
 

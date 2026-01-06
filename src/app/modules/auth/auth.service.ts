@@ -67,6 +67,9 @@ const signupFunc = async (registrationDoc: IRegisterDoc) => {
   });
 
   if (existing) {
+    if (existing?.isBlocked) {
+      throw new AppError(StatusCodes.FORBIDDEN, 'User is blocked 🤡');
+    }
     if (existing.username === registrationDoc.username) {
       throw new AppError(StatusCodes.CONFLICT, 'Username already exists');
     }
@@ -96,6 +99,99 @@ const signupFunc = async (registrationDoc: IRegisterDoc) => {
   }
 
   // 8. JWT payload
+  const jwtPayload = {
+    id: res._id,
+    email: res?.email,
+    name: res?.name,
+    userName: res?.username,
+    role: res?.role,
+    isBlocked: res?.isBlocked,
+    isEmailVerified: res?.isEmailVerified,
+    subscriptionPlan: res?.subscriptionPlan,
+    status: res?.status,
+    photoURL: res?.photoURL,
+  };
+
+  const accessToken = generateToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string
+  );
+
+  const refreshToken = generateToken(
+    jwtPayload,
+    config.jwt_refresh_secret as string,
+    config.jwt_refresh_expires_in as string
+  );
+
+  // 9. Return response
+  return {
+    accessToken,
+    refreshToken,
+    userInfo: {
+      username: res.username,
+      name: res.name,
+      email: res.email,
+      isEmailVerified: res.isEmailVerified,
+      role: res.role,
+      photoURL: res.photoURL,
+      isBlocked: res.isBlocked,
+      status: res.status,
+      phoneNumber: res.phoneNumber,
+    },
+  };
+};
+const signupWithProviderfunc = async (registrationDoc: IRegisterDoc) => {
+  // Create user
+  const isExisting = await Auth.findOne({ email: registrationDoc.email });
+
+  if (isExisting) {
+
+    const jwtPayload = {
+      id: isExisting?._id,
+      email: isExisting?.email,
+      name: isExisting?.name,
+      userName: isExisting?.username,
+      role: isExisting?.role,
+      isBlocked: isExisting?.isBlocked,
+
+      subscriptionPlan: isExisting?.subscriptionPlan,
+      status: isExisting?.status,
+      photoURL: isExisting?.photoURL,
+    };
+
+    const accessToken = generateToken(
+      jwtPayload,
+      config.jwt_access_secret as string,
+      config.jwt_access_expires_in as string
+    );
+
+    const refreshToken = generateToken(
+      jwtPayload,
+      config.jwt_refresh_secret as string,
+      config.jwt_refresh_expires_in as string
+    );
+
+    // 9. Return response
+    return {
+      accessToken,
+      refreshToken,
+      userInfo: {
+        username: isExisting.username,
+        name: isExisting.name,
+        email: isExisting.email,
+        isEmailVerified: isExisting.isEmailVerified,
+        role: isExisting.role,
+        photoURL: isExisting.photoURL,
+        isBlocked: isExisting.isBlocked,
+        status: isExisting.status,
+        phoneNumber: isExisting.phoneNumber,
+      },
+    };
+  }
+  registrationDoc.password = null;
+  const res = await Auth.create(registrationDoc);
+
   const jwtPayload = {
     id: res._id,
     email: res?.email,
@@ -136,16 +232,57 @@ const signupFunc = async (registrationDoc: IRegisterDoc) => {
       phoneNumber: res.phoneNumber,
     },
   };
-};
 
+}
+
+
+const signInWithProviderfunc = async (payload: TLoginUser) => {
+  const user = await Auth.findOne({ email: payload?.email });
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found 😒');
+  }
+  if (user?.isBlocked) {
+    throw new AppError(StatusCodes.FORBIDDEN, 'User is blocked 🤡');
+  }
+
+  const jwtPayload = {
+    id: user?._id?.toString(),
+    email: user?.email,
+    role: user?.role,
+    userName: user?.username,
+    name: user?.name,
+    isEmailVerified: user?.isEmailVerified,
+    isBlocked: user?.isBlocked,
+    subscriptionPlan: user?.subscriptionPlan,
+    status: user?.status,
+    photoURL: user?.photoURL,
+  }
+
+
+  const refreshToken = generateToken(
+    jwtPayload,
+    config.jwt_refresh_secret as string,
+    config.jwt_refresh_expires_in as string
+  );
+
+  // 8️⃣ Return response
+  return {
+    refreshToken,
+    userInfo: {
+      username: user?.username,
+        name: user?.name,
+        email: user?.email,
+        isEmailVerified: user?.isEmailVerified,
+        role: user?.role,
+        photoURL: user?.photoURL,
+        isBlocked: user?.isBlocked,
+        status: user?.status,
+        phoneNumber: user?.phoneNumber,
+    },
+  };
+};
 // Helper to safely build a case-insensitive exact-match RegExp from arbitrary input
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-/**
-* Allow login using either username OR email + password.
-* - Accepts payload.email or payload.username or payload.identifier (preferred generic name).
-* - Performs case-insensitive lookup for both username and email.
-*/
 
 
 const loginFunc = async (payload: any) => {
@@ -187,7 +324,7 @@ const loginFunc = async (payload: any) => {
       throw new AppError(StatusCodes.FORBIDDEN, 'User is blocked 🤡');
     }
 
-    if (user.password === undefined) {
+    if (user.password === undefined || user.password === null) {
 
       throw new AppError(StatusCodes.FORBIDDEN, 'User is not valid 🚫');
     }
@@ -471,7 +608,9 @@ const verificationUserCodeFunc = async (email: string, emailVerifyCode: string) 
 
 export const authService = {
   signupFunc,
+  signupWithProviderfunc,
   loginFunc,
+  signInWithProviderfunc,
   getProfileInfoFunc,
   updateUserFunc,
   statusFuc,
