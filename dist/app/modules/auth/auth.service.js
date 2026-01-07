@@ -8,7 +8,6 @@ const AppError_1 = __importDefault(require("../../errors/AppError"));
 const http_status_codes_1 = require("http-status-codes");
 const auth_utils_1 = require("./auth.utils");
 const config_1 = __importDefault(require("../../config"));
-const bcrypt_1 = __importDefault(require("bcrypt"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const generateCodeVarification_1 = __importDefault(require("../../utils/generateCodeVarification"));
 const sendEmail_1 = require("../../utils/sendEmail");
@@ -60,6 +59,9 @@ const signupFunc = async (registrationDoc) => {
         ]
     });
     if (existing) {
+        if (existing?.isBlocked) {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User is blocked 🤡');
+        }
         if (existing.username === registrationDoc.username) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.CONFLICT, 'Username already exists');
         }
@@ -93,6 +95,8 @@ const signupFunc = async (registrationDoc) => {
         userName: res?.username,
         role: res?.role,
         isBlocked: res?.isBlocked,
+        isEmailVerified: res?.isEmailVerified,
+        signInMethod: res?.signInMethod,
         subscriptionPlan: res?.subscriptionPlan,
         status: res?.status,
         photoURL: res?.photoURL,
@@ -116,13 +120,114 @@ const signupFunc = async (registrationDoc) => {
         },
     };
 };
+const signupWithProviderfunc = async (registrationDoc) => {
+    // Create user
+    const isExisting = await auth_model_1.Auth.findOne({ email: registrationDoc.email });
+    if (isExisting) {
+        const jwtPayload = {
+            id: isExisting?._id,
+            email: isExisting?.email,
+            name: isExisting?.name,
+            userName: isExisting?.username,
+            role: isExisting?.role,
+            isBlocked: isExisting?.isBlocked,
+            signInMethod: isExisting?.signInMethod,
+            subscriptionPlan: isExisting?.subscriptionPlan,
+            status: isExisting?.status,
+            photoURL: isExisting?.photoURL,
+        };
+        const accessToken = (0, auth_utils_1.generateToken)(jwtPayload, config_1.default.jwt_access_secret, config_1.default.jwt_access_expires_in);
+        const refreshToken = (0, auth_utils_1.generateToken)(jwtPayload, config_1.default.jwt_refresh_secret, config_1.default.jwt_refresh_expires_in);
+        // 9. Return response
+        return {
+            accessToken,
+            refreshToken,
+            userInfo: {
+                username: isExisting.username,
+                name: isExisting.name,
+                email: isExisting.email,
+                isEmailVerified: isExisting.isEmailVerified,
+                role: isExisting.role,
+                photoURL: isExisting.photoURL,
+                isBlocked: isExisting.isBlocked,
+                status: isExisting.status,
+                phoneNumber: isExisting.phoneNumber,
+            },
+        };
+    }
+    registrationDoc.password = null;
+    const res = await auth_model_1.Auth.create(registrationDoc);
+    const jwtPayload = {
+        id: res._id,
+        email: res?.email,
+        name: res?.name,
+        userName: res?.username,
+        role: res?.role,
+        isBlocked: res?.isBlocked,
+        signInMethod: res?.signInMethod,
+        subscriptionPlan: res?.subscriptionPlan,
+        status: res?.status,
+        photoURL: res?.photoURL,
+    };
+    const accessToken = (0, auth_utils_1.generateToken)(jwtPayload, config_1.default.jwt_access_secret, config_1.default.jwt_access_expires_in);
+    const refreshToken = (0, auth_utils_1.generateToken)(jwtPayload, config_1.default.jwt_refresh_secret, config_1.default.jwt_refresh_expires_in);
+    // 9. Return response
+    return {
+        accessToken,
+        refreshToken,
+        userInfo: {
+            username: res.username,
+            name: res.name,
+            email: res.email,
+            isEmailVerified: res.isEmailVerified,
+            role: res.role,
+            photoURL: res.photoURL,
+            isBlocked: res.isBlocked,
+            status: res.status,
+            phoneNumber: res.phoneNumber,
+        },
+    };
+};
+const signInWithProviderfunc = async (payload) => {
+    const user = await auth_model_1.Auth.findOne({ email: payload?.email });
+    if (!user) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found 😒');
+    }
+    if (user?.isBlocked) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User is blocked 🤡');
+    }
+    const jwtPayload = {
+        id: user?._id?.toString(),
+        email: user?.email,
+        role: user?.role,
+        userName: user?.username,
+        name: user?.name,
+        signInMethod: user?.signInMethod,
+        isEmailVerified: user?.isEmailVerified,
+        isBlocked: user?.isBlocked,
+        subscriptionPlan: user?.subscriptionPlan,
+        status: user?.status,
+        photoURL: user?.photoURL,
+    };
+    const refreshToken = (0, auth_utils_1.generateToken)(jwtPayload, config_1.default.jwt_refresh_secret, config_1.default.jwt_refresh_expires_in);
+    // 8️⃣ Return response
+    return {
+        refreshToken,
+        userInfo: {
+            username: user?.username,
+            name: user?.name,
+            email: user?.email,
+            isEmailVerified: user?.isEmailVerified,
+            role: user?.role,
+            photoURL: user?.photoURL,
+            isBlocked: user?.isBlocked,
+            status: user?.status,
+            phoneNumber: user?.phoneNumber,
+        },
+    };
+};
 // Helper to safely build a case-insensitive exact-match RegExp from arbitrary input
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/**
-* Allow login using either username OR email + password.
-* - Accepts payload.email or payload.username or payload.identifier (preferred generic name).
-* - Performs case-insensitive lookup for both username and email.
-*/
 const loginFunc = async (payload) => {
     const session = await mongoose_1.default.startSession();
     session.startTransaction();
@@ -151,7 +256,7 @@ const loginFunc = async (payload) => {
         if (user.isBlocked) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User is blocked 🤡');
         }
-        if (user.password === undefined) {
+        if (user.password === undefined || user.password === null) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User is not valid 🚫');
         }
         // 3️⃣ Verify password
@@ -167,6 +272,7 @@ const loginFunc = async (payload) => {
             userName: user?.username,
             name: user?.name,
             isEmailVerified: user?.isEmailVerified,
+            signInMethod: user?.signInMethod,
             isBlocked: user?.isBlocked,
             subscriptionPlan: user?.subscriptionPlan,
             status: user?.status,
@@ -255,26 +361,40 @@ const statusFuc = async (payload) => {
         return res;
     }
 };
-const updatePasswordFunc = async (payload) => {
+const updatePasswordFunc = async (req) => {
     const session = await mongoose_1.default.startSession();
     session.startTransaction();
+    const payload = req?.body;
+    const rawUser = req.user;
     try {
-        const user = await auth_model_1.Auth.findOne({ email: payload?.email }).session(session);
+        if (!payload?.signInMethod || rawUser?.signInMethod !== payload?.signInMethod || !rawUser?.signInMethod) {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, `Sign-in method is required`);
+        }
+        if (payload?.signInMethod && payload?.signInMethod !== 'email') {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, `Password update not allowed for ${payload?.signInMethod} sign-in method`);
+        }
+        const user = await auth_model_1.Auth.findOne({ email: 'smp23997@gmail.com' }).select('+password').session(session);
+        if (!payload?.cpassword || !payload?.npassword) {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Current and new passwords are required');
+        }
         if (!user) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'User not found');
         }
-        if (!user?.password) {
-            throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'User has no password set');
+        if (user?.isBlocked) {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'Account is blocked');
         }
-        const isMatchPassword = await bcrypt_1.default.compare(payload?.cpassword, user?.password);
+        if (user.password === undefined || user.password === null) {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'User is not valid 🚫');
+        }
+        if (user?.isEmailVerified === false) {
+            throw new AppError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'Email is not verified.');
+        }
+        const isMatchPassword = await auth_model_1.Auth.isPasswordMatched(payload?.cpassword, user?.password);
         if (!isMatchPassword) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'Incorrect current password');
         }
-        const newpass = await bcrypt_1.default.hash(payload?.npassword, Number(config_1.default.bcrypt_salt_rounds));
-        if (!newpass) {
-            throw new AppError_1.default(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, 'Error in password hash');
-        }
-        const res = await auth_model_1.Auth.updateOne({ email: payload?.email }, { password: newpass }).session(session);
+        user.password = payload?.password;
+        const res = await user?.save({ session });
         await session.commitTransaction();
         session.endSession();
         return res;
@@ -379,7 +499,9 @@ const verificationUserCodeFunc = async (email, emailVerifyCode) => {
 };
 exports.authService = {
     signupFunc,
+    signupWithProviderfunc,
     loginFunc,
+    signInWithProviderfunc,
     getProfileInfoFunc,
     updateUserFunc,
     statusFuc,

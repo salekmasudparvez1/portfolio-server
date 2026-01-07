@@ -20,6 +20,6 @@ authRouter.patch('/update-user/:id',verifyAdmin, authController.updateUser);
 authRouter.get('/getSingle/:email', authController.getSingleUser);
 authRouter.patch('/update',verifyAdmin, authController.status);
 authRouter.patch('/update/user', authController.updateName);
-authRouter.patch('/update/password', authController.updatePassword);
+authRouter.put('/update/password',verifyUser, authController.updatePassword);
 
 export default authRouter;

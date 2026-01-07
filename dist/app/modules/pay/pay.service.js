@@ -38,7 +38,7 @@ const createPaymentIntentFunc = async (req) => {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Payment already completed for this application");
         }
         if (reusableStatuses.includes(existingIntent.status)) {
-            console.log('click-inside');
+           
             return {
                 clientSecret: existingIntent.client_secret,
             };

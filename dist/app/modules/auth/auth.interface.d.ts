@@ -3,8 +3,9 @@ export interface IUserCreate extends Document {
     name: string;
     username: string;
     email: string;
+    signInMethod?: 'email' | 'google' | 'github' | 'unknown';
     phoneNumber: string;
-    password?: string;
+    password?: string | null;
     role: 'admin' | 'user';
     isBlocked: boolean;
     photoURL: string;
@@ -17,7 +18,7 @@ export interface IUserCreate extends Document {
     emailVerifyCode?: string;
     emailVerifyExpire?: Date;
 }
-export type IRegisterDoc = Pick<IUserCreate, 'name' | 'username' | 'email' | 'phoneNumber' | 'password' | 'isBlocked' | 'photoURL' | 'role' | 'emailVerifyCode' | 'emailVerifyExpire' | 'isEmailVerified' | 'region' | 'device'>;
+export type IRegisterDoc = Pick<IUserCreate, 'name' | 'username' | 'email' | 'phoneNumber' | 'password' | 'isBlocked' | 'photoURL' | 'role' | 'emailVerifyCode' | 'emailVerifyExpire' | 'isEmailVerified' | 'region' | 'device' | 'signInMethod'>;
 export type TSignupModel = Model<IUserCreate> & {
     isPasswordMatched(plainTextPassword: string, hashedPassword: string): Promise<boolean>;
     isUserExistsByCustomId(email: string): Promise<IUserCreate | null>;

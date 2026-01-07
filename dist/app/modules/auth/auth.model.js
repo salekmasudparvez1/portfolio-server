@@ -40,14 +40,13 @@ exports.Auth = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const mongoose_1 = __importStar(require("mongoose"));
 const config_1 = __importDefault(require("../../config"));
-const AppError_1 = __importDefault(require("../../errors/AppError"));
-const http_status_codes_1 = require("http-status-codes");
 const authSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    phoneNumber: { type: String, required: true, unique: true },
-    password: { type: String, select: false },
+    signInMethod: { type: String, enum: ['email', 'google', 'github', 'unknown'], required: false, default: 'email' },
+    phoneNumber: { type: String, unique: true, default: null },
+    password: { type: String, select: false, default: null },
     role: { type: String, enum: ['admin', 'user'], required: true },
     isBlocked: { type: Boolean, default: false, required: true },
     subscriptionPlan: { type: String, enum: ['free', 'premium'], default: 'free' },
@@ -65,11 +64,11 @@ const authSchema = new mongoose_1.Schema({
     collection: 'users',
 });
 authSchema.pre('save', async function () {
-    const data = this;
-    if (!data.password) {
-        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Password is required');
+    if (!this.isModified('password'))
+        return;
+    if (this.password) {
+        this.password = await bcrypt_1.default.hash(this.password, Number(config_1.default.bcrypt_salt_rounds));
     }
-    data.password = await bcrypt_1.default.hash(data.password, Number(config_1.default.bcrypt_salt_rounds));
 });
 authSchema.statics.isPasswordMatched = async function (plainTextPassword, hashedPassword) {
     return await bcrypt_1.default.compare(plainTextPassword, hashedPassword);

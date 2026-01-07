@@ -107,6 +107,7 @@ const signupFunc = async (registrationDoc: IRegisterDoc) => {
     role: res?.role,
     isBlocked: res?.isBlocked,
     isEmailVerified: res?.isEmailVerified,
+    signInMethod: res?.signInMethod,
     subscriptionPlan: res?.subscriptionPlan,
     status: res?.status,
     photoURL: res?.photoURL,
@@ -154,7 +155,7 @@ const signupWithProviderfunc = async (registrationDoc: IRegisterDoc) => {
       userName: isExisting?.username,
       role: isExisting?.role,
       isBlocked: isExisting?.isBlocked,
-
+      signInMethod: isExisting?.signInMethod,
       subscriptionPlan: isExisting?.subscriptionPlan,
       status: isExisting?.status,
       photoURL: isExisting?.photoURL,
@@ -199,6 +200,7 @@ const signupWithProviderfunc = async (registrationDoc: IRegisterDoc) => {
     userName: res?.username,
     role: res?.role,
     isBlocked: res?.isBlocked,
+    signInMethod: res?.signInMethod,
     subscriptionPlan: res?.subscriptionPlan,
     status: res?.status,
     photoURL: res?.photoURL,
@@ -251,6 +253,7 @@ const signInWithProviderfunc = async (payload: TLoginUser) => {
     role: user?.role,
     userName: user?.username,
     name: user?.name,
+    signInMethod: user?.signInMethod,
     isEmailVerified: user?.isEmailVerified,
     isBlocked: user?.isBlocked,
     subscriptionPlan: user?.subscriptionPlan,
@@ -270,14 +273,14 @@ const signInWithProviderfunc = async (payload: TLoginUser) => {
     refreshToken,
     userInfo: {
       username: user?.username,
-        name: user?.name,
-        email: user?.email,
-        isEmailVerified: user?.isEmailVerified,
-        role: user?.role,
-        photoURL: user?.photoURL,
-        isBlocked: user?.isBlocked,
-        status: user?.status,
-        phoneNumber: user?.phoneNumber,
+      name: user?.name,
+      email: user?.email,
+      isEmailVerified: user?.isEmailVerified,
+      role: user?.role,
+      photoURL: user?.photoURL,
+      isBlocked: user?.isBlocked,
+      status: user?.status,
+      phoneNumber: user?.phoneNumber,
     },
   };
 };
@@ -343,6 +346,7 @@ const loginFunc = async (payload: any) => {
       userName: user?.username,
       name: user?.name,
       isEmailVerified: user?.isEmailVerified,
+      signInMethod: user?.signInMethod,
       isBlocked: user?.isBlocked,
       subscriptionPlan: user?.subscriptionPlan,
       status: user?.status,
@@ -453,33 +457,42 @@ const statusFuc = async (payload: TUpdateDoc) => {
   }
 
 }
-const updatePasswordFunc = async (payload: any) => {
+const updatePasswordFunc = async (req: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-
+  const payload: { cpassword: string, npassword: string; signInMethod: string, password: string } = req?.body;
+  const rawUser = (req as any).user;
   try {
-    const user = await Auth.findOne({ email: payload?.email }).session(session);
+    if (!payload?.signInMethod || rawUser?.signInMethod !== payload?.signInMethod || !rawUser?.signInMethod) {
+      throw new AppError(StatusCodes.BAD_REQUEST, `Sign-in method is required`);
+    }
+    if (payload?.signInMethod && payload?.signInMethod !== 'email') {
+      throw new AppError(StatusCodes.BAD_REQUEST, `Password update not allowed for ${payload?.signInMethod} sign-in method`);
+    }
+
+    const user = await Auth.findOne({ email: 'smp23997@gmail.com' }).select('+password').session(session);
+    if (!payload?.cpassword || !payload?.npassword) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Current and new passwords are required');
+    }
     if (!user) {
       throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
     }
-    if (!user?.password) {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'User has no password set');
+    if (user?.isBlocked) {
+      throw new AppError(StatusCodes.FORBIDDEN, 'Account is blocked');
     }
-
-    const isMatchPassword = await bcrypt.compare(payload?.cpassword, user?.password);
+    if (user.password === undefined || user.password === null) {
+      throw new AppError(StatusCodes.FORBIDDEN, 'User is not valid 🚫');
+    }
+    if (user?.isEmailVerified === false) {
+      throw new AppError(StatusCodes.FORBIDDEN, 'Email is not verified.');
+    }
+    const isMatchPassword = await Auth.isPasswordMatched(payload?.cpassword, (user as any)?.password);
     if (!isMatchPassword) {
       throw new AppError(StatusCodes.UNAUTHORIZED, 'Incorrect current password');
     }
+    user!.password = payload?.password;
 
-    const newpass = await bcrypt.hash(
-      payload?.npassword,
-      Number(config.bcrypt_salt_rounds)
-    );
-    if (!newpass) {
-      throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error in password hash');
-    }
-
-    const res = await Auth.updateOne({ email: payload?.email }, { password: newpass }).session(session);
+    const res = await user?.save({ session });
 
     await session.commitTransaction();
     session.endSession();

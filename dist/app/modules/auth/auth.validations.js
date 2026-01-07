@@ -10,10 +10,11 @@ exports.signupValidationSchema = zod_1.z.object({
         phoneNumber: zod_1.z
             .string()
             .min(10, { message: 'Phone number must be at least 10 digits' })
-            .regex(/^\+?\d+$/, { message: "Phone number must contain only digits and may start with '+'" }),
+            .regex(/^\+?\d+$/, { message: "Phone number must contain only digits and may start with '+'" }).optional(),
         password: zod_1.z.string().min(6, { message: 'Password must be at least 6 characters' }).optional(),
         // role is optional for public signup and will default to 'user'z
         role: zod_1.z.enum(['admin', 'user']).optional().default('user'),
+        signInMethod: zod_1.z.enum(['email', 'google', 'github']).optional().default('email'),
         // optional secret to allow admin registration when matched with server env var
         adminKey: zod_1.z.string().optional(),
         isBlocked: zod_1.z.boolean().optional().default(false),

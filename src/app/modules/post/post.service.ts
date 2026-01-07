@@ -139,12 +139,12 @@ const updatePost = async (id: string, payload: Partial<IPost>) => {
       throw new AppError(httpStatus.CONFLICT, "Slug already exists");
     }
   }
-  console.log(payload);
+ 
   const result = await Post.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
   });
-  console.log(result);
+ 
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, "Post not found");
   }

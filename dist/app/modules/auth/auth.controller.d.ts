@@ -3,7 +3,9 @@ export declare const authController: {
     signup: (req: Request, res: Response, next: import("express").NextFunction) => void;
     resendVerificationCode: (req: Request, res: Response, next: import("express").NextFunction) => void;
     verificationUserCode: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    signInWithProvider: (req: Request, res: Response, next: import("express").NextFunction) => void;
     login: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    signupWithProvider: (req: Request, res: Response, next: import("express").NextFunction) => void;
     getProfileInfo: (req: Request, res: Response, next: import("express").NextFunction) => void;
     updateUser: (req: Request, res: Response, next: import("express").NextFunction) => void;
     status: (req: Request, res: Response, next: import("express").NextFunction) => void;

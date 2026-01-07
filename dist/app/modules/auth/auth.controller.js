@@ -23,12 +23,13 @@ const signup = (0, catchAsync_1.default)(async (req, res) => {
         region: data?.region || "Not Specified",
         device: data?.device || "Not Specified",
         isEmailVerified: false,
+        signInMethod: 'email',
     };
     const result = await auth_service_1.authService.signupFunc(getDoc);
-    res.cookie("refreshToken", result.refreshToken, {
-        secure: config_1.default.NODE_ENV === "production",
+    res.cookie('refreshToken', result.refreshToken, {
+        secure: config_1.default.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: "none",
+        sameSite: 'none',
         maxAge: 1000 * 60 * 60 * 24 * 365,
     });
     (0, sendResponse_1.default)(res, {
@@ -36,6 +37,52 @@ const signup = (0, catchAsync_1.default)(async (req, res) => {
         message: 'User sign up successfully',
         data: result,
         statusCode: http_status_codes_1.default.ACCEPTED,
+    });
+});
+const signupWithProvider = (0, catchAsync_1.default)(async (req, res) => {
+    const data = req.body;
+    const getDoc = {
+        name: data?.name,
+        username: data?.username,
+        email: data?.email,
+        phoneNumber: data?.phoneNumber || "Not Specified",
+        password: data?.password || "Not Specified",
+        role: data?.role || "user",
+        photoURL: data?.photoURL || "https://res.cloudinary.com/dncnvqrc6/image/upload/v1740454884/untitled.png",
+        isBlocked: false,
+        region: data?.region || "Not Specified",
+        device: data?.device || "Not Specified",
+        isEmailVerified: true,
+        signInMethod: data?.signInMethod || 'unknown',
+    };
+    const result = await auth_service_1.authService.signupWithProviderfunc(getDoc);
+    res.cookie('refreshToken', result?.refreshToken, {
+        secure: config_1.default.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'none',
+        maxAge: 1000 * 60 * 60 * 24 * 365,
+    });
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        message: 'User sign up with provider successfully',
+        data: result?.userInfo,
+        statusCode: http_status_codes_1.default.ACCEPTED,
+    });
+});
+const signInWithProvider = (0, catchAsync_1.default)(async (req, res) => {
+    const data = req.body;
+    const result = await auth_service_1.authService.signInWithProviderfunc(data);
+    res.cookie('refreshToken', result?.refreshToken, {
+        secure: config_1.default.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'none',
+        maxAge: 1000 * 60 * 60 * 24 * 365,
+    });
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        message: 'User sign in with provider successfully',
+        data: result?.userInfo,
+        statusCode: http_status_codes_1.default.OK,
     });
 });
 const resendVerificationCode = (0, catchAsync_1.default)(async (req, res) => {
@@ -103,8 +150,7 @@ const status = (0, catchAsync_1.default)(async (req, res) => {
     });
 });
 const updatePassword = (0, catchAsync_1.default)(async (req, res) => {
-    const getUpdateInfo = req.body;
-    const result = await auth_service_1.authService.updatePasswordFunc(getUpdateInfo);
+    const result = await auth_service_1.authService.updatePasswordFunc(req);
     (0, sendResponse_1.default)(res, {
         success: true,
         message: 'Updated user password ',
@@ -139,7 +185,9 @@ exports.authController = {
     signup,
     resendVerificationCode,
     verificationUserCode,
+    signInWithProvider,
     login,
+    signupWithProvider,
     getProfileInfo,
     updateUser,
     status,

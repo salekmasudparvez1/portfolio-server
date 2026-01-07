@@ -168,8 +168,8 @@ const status = catchAsync(async (req: Request, res: Response) => {
   });
 });
 const updatePassword = catchAsync(async (req: Request, res: Response) => {
-  const getUpdateInfo = req.body;
-  const result = await authService.updatePasswordFunc(getUpdateInfo);
+
+  const result = await authService.updatePasswordFunc(req as Request);
   sendResponse(res, {
     success: true,
     message: 'Updated user password ',

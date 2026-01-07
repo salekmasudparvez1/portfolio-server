@@ -4,11 +4,16 @@ export declare const signupValidationSchema: z.ZodObject<{
         name: z.ZodString;
         username: z.ZodString;
         email: z.ZodString;
-        phoneNumber: z.ZodString;
+        phoneNumber: z.ZodOptional<z.ZodString>;
         password: z.ZodOptional<z.ZodString>;
         role: z.ZodDefault<z.ZodOptional<z.ZodEnum<{
             admin: "admin";
             user: "user";
+        }>>>;
+        signInMethod: z.ZodDefault<z.ZodOptional<z.ZodEnum<{
+            email: "email";
+            google: "google";
+            github: "github";
         }>>>;
         adminKey: z.ZodOptional<z.ZodString>;
         isBlocked: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;

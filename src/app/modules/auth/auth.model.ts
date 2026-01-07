@@ -35,18 +35,17 @@ const authSchema = new Schema(
   },
 );
 authSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
 
-  const data = this;
-  // if (!data.password) {
-  //   throw new AppError(StatusCodes.BAD_REQUEST, 'Password is required');
-  // }
-  if (data.password) {
-    data.password = await bcrypt.hash(
-      data.password,
-      Number(config.bcrypt_salt_rounds),
+  if (this.password) {
+    this.password = await bcrypt.hash(
+      this.password,
+      Number(config.bcrypt_salt_rounds)
     );
   }
 });
+
+
 authSchema.statics.isPasswordMatched = async function (
   plainTextPassword,
   hashedPassword,

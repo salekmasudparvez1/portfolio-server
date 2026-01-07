@@ -1,4 +1,4 @@
-import { IRegisterDoc, IUserCreate } from './auth.interface';
+import { IRegisterDoc, IUserCreate, TLoginUser } from './auth.interface';
 import mongoose from 'mongoose';
 interface TUpdateDoc {
     id: string;
@@ -6,6 +6,21 @@ interface TUpdateDoc {
 }
 export declare const authService: {
     signupFunc: (registrationDoc: IRegisterDoc) => Promise<{
+        accessToken: string;
+        refreshToken: string;
+        userInfo: {
+            username: string;
+            name: string;
+            email: string;
+            isEmailVerified: boolean;
+            role: "admin" | "user";
+            photoURL: string;
+            isBlocked: boolean;
+            status: "pending" | "approved" | "rejected";
+            phoneNumber: string;
+        };
+    }>;
+    signupWithProviderfunc: (registrationDoc: IRegisterDoc) => Promise<{
         accessToken: string;
         refreshToken: string;
         userInfo: {
@@ -30,6 +45,20 @@ export declare const authService: {
             photoURL: string;
         };
     }>;
+    signInWithProviderfunc: (payload: TLoginUser) => Promise<{
+        refreshToken: string;
+        userInfo: {
+            username: string;
+            name: string;
+            email: string;
+            isEmailVerified: boolean;
+            role: "admin" | "user";
+            photoURL: string;
+            isBlocked: boolean;
+            status: "pending" | "approved" | "rejected";
+            phoneNumber: string;
+        };
+    }>;
     getProfileInfoFunc: (req: Request) => Promise<IUserCreate & Required<{
         _id: mongoose.Types.ObjectId;
     }> & {
@@ -41,7 +70,11 @@ export declare const authService: {
     }> & {
         __v: number;
     }) | null | undefined>;
-    updatePasswordFunc: (payload: any) => Promise<mongoose.UpdateWriteOpResult>;
+    updatePasswordFunc: (req: any) => Promise<mongoose.Document<unknown, {}, IUserCreate, {}, mongoose.DefaultSchemaOptions> & IUserCreate & Required<{
+        _id: mongoose.Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     getSingleUserFunc: (email: string) => Promise<(mongoose.Document<unknown, {}, IUserCreate, {}, mongoose.DefaultSchemaOptions> & IUserCreate & Required<{
         _id: mongoose.Types.ObjectId;
     }> & {
