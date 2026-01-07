@@ -1,1 +1,1 @@
-{"version":3,"file":"post.controller.d.ts","sourceRoot":"","sources":["../../../../src/app/modules/post/post.controller.ts"],"names":[],"mappings":"AAIA,OAAO,EAAE,OAAO,EAAE,MAAM,SAAS,CAAC;AAyGlC,eAAO,MAAM,cAAc;;;;;;;;;;CAU1B,CAAC"}
+{"version":3,"file":"post.controller.d.ts","sourceRoot":"","sources":["../../../../src/app/modules/post/post.controller.ts"],"names":[],"mappings":"AAIA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAyG5C,eAAO,MAAM,cAAc;;;;;;;;;;CAU1B,CAAC"}

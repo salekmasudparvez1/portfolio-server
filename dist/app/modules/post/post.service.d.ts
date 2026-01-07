@@ -1,5 +1,5 @@
 import { IPost } from "./post.interface";
-import { Request } from "express";
+import { Request, Response } from "express";
 export declare const PostService: {
     createPost: (req: Request) => Promise<import("mongoose").Document<unknown, {}, IPost, {}, import("mongoose").DefaultSchemaOptions> & IPost & Required<{
         _id: string;
@@ -29,7 +29,7 @@ export declare const PostService: {
     }> & {
         __v: number;
     }>;
-    updatePost: (id: string, payload: Partial<IPost>) => Promise<import("mongoose").Document<unknown, {}, IPost, {}, import("mongoose").DefaultSchemaOptions> & IPost & Required<{
+    updatePost: (id: string, req: Request) => Promise<import("mongoose").Document<unknown, {}, IPost, {}, import("mongoose").DefaultSchemaOptions> & IPost & Required<{
         _id: string;
     }> & {
         __v: number;
@@ -39,10 +39,14 @@ export declare const PostService: {
     }> & {
         __v: number;
     }>;
-    incrementViews: (id: string) => Promise<import("mongoose").Document<unknown, {}, IPost, {}, import("mongoose").DefaultSchemaOptions> & IPost & Required<{
-        _id: string;
-    }> & {
-        __v: number;
+    incrementViews: (slug: any, req: Request, res: Response) => Promise<{
+        counted: boolean;
+        message: string;
+        views?: never;
+    } | {
+        counted: boolean;
+        views: number;
+        message: string;
     }>;
     getFeaturedPosts: (type?: "project" | "blog") => Promise<(IPost & Required<{
         _id: string;

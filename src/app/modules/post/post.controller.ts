@@ -2,9 +2,9 @@ import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { PostService } from "./post.service";
-import { Request } from "express";
+import { Request, Response } from "express";
 
-const createPost = catchAsync(async (req, res) => {
+const createPost = catchAsync(async (req: Request, res: Response) => {
   const result = await PostService.createPost( req as Request);
 
   sendResponse(res, {
@@ -15,7 +15,7 @@ const createPost = catchAsync(async (req, res) => {
   });
 });
 
-const getAllPosts = catchAsync(async (req, res) => {
+const getAllPosts = catchAsync(async (req: Request, res: Response) => {
 
   const result = await PostService.getAllPosts(req.query);
 
@@ -27,7 +27,7 @@ const getAllPosts = catchAsync(async (req, res) => {
   });
 });
 
-const getPostById = catchAsync(async (req, res) => {
+const getPostById = catchAsync(async (req: Request, res: Response) => {
   const result = await PostService.getPostById(req.params.id as string);
 
   sendResponse(res, {
@@ -38,7 +38,7 @@ const getPostById = catchAsync(async (req, res) => {
   });
 });
 
-const getPostBySlug = catchAsync(async (req, res) => {
+const getPostBySlug = catchAsync(async (req: Request, res: Response) => {
   const result = await PostService.getPostBySlug(req.params.slug as string);
 
   sendResponse(res, {
@@ -49,8 +49,8 @@ const getPostBySlug = catchAsync(async (req, res) => {
   });
 });
 
-const updatePost = catchAsync(async (req, res) => {
-  const result = await PostService.updatePost(req.params.id as string, req.body);
+const updatePost = catchAsync(async (req: Request, res: Response) => {
+  const result = await PostService.updatePost(req.params.id as string, req);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -60,7 +60,7 @@ const updatePost = catchAsync(async (req, res) => {
   });
 });
 
-const deletePost = catchAsync(async (req, res) => {
+const deletePost = catchAsync(async (req: Request, res: Response) => {
   await PostService.deletePost(req.params.id as string);
 
   sendResponse(res, {
@@ -71,18 +71,18 @@ const deletePost = catchAsync(async (req, res) => {
   });
 });
 
-const incrementViews = catchAsync(async (req, res) => {
-  const result = await PostService.incrementViews(req.params.id as string);
+const incrementViews = catchAsync(async (req: Request, res: Response) => {
+  const result = await PostService.incrementViews(req.params.slug, req, res);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Views incremented successfully",
+    message: result.message,
     data: result,
   });
 });
 
-const getFeaturedPosts = catchAsync(async (req, res) => {
+const getFeaturedPosts = catchAsync(async (req: Request, res: Response) => {
   const result = await PostService.getFeaturedPosts(
     req.query.type as "project" | "blog" | undefined
   );
@@ -95,7 +95,7 @@ const getFeaturedPosts = catchAsync(async (req, res) => {
   });
 });
 
-const getRelatedPosts = catchAsync(async (req, res) => {
+const getRelatedPosts = catchAsync(async (req: Request, res: Response) => {
   const limit = req.query.limit ? Number(req.query.limit) : 3;
   const result = await PostService.getRelatedPosts(req.params.id as string, limit);
 

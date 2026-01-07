@@ -33,11 +33,42 @@ exports.uploadMixed = upload.fields([
     { name: 'ogImage', maxCount: 1 },
     { name: 'gallery', maxCount: 5 }
 ]);
+// 3.5 DEBUG MIDDLEWARE - Add before processPostImages
+// export const debugRequest = (req: any, res: any, next: any) => {
+//   // console.log("\n🔍 [DEBUG] Request details:");
+//   // console.log("📍 Route:", req.method, req.path);
+//   // console.log("📦 Content-Type:", req.headers['content-type']);
+//   // console.log("📁 Files keys:", req.files ? Object.keys(req.files) : 'no files');
+//   // console.log("📋 Body keys:", Object.keys(req.body));
+//   // console.log("📄 Body.seo:", req.body.seo);
+//   if (req.files) {
+//     console.log("🖼️ Files detail:", JSON.stringify(req.files, null, 2));
+//   }
+//   next();
+// };
 // 4. THE PROCESSOR MIDDLEWARE
 const processPostImages = async (req, res, next) => {
+    // console.log("\n🚀 [ImageUpload] processPostImages middleware started");
+    // console.log("📍 [ImageUpload] Route:", req.method, req.path);
     const files = req.files;
-    if (!files)
-        return next();
+    // console.log("📁 [ImageUpload] Files received:", {
+    //   hasFiles: !!files,
+    //   filesType: typeof files,
+    //   filesKeys: files ? Object.keys(files) : 'none',
+    //   fileFields: files ? Object.keys(files) : [],
+    //   coverImage: files?.coverImage?.length || 0,
+    //   ogImage: files?.ogImage?.length || 0,
+    //   gallery: files?.gallery?.length || 0
+    // });
+    // console.log("📋 [ImageUpload] Request body SEO before processing:", {
+    //   hasSeo: !!req.body.seo,
+    //   seoType: typeof req.body.seo,
+    //   seoValue: req.body.seo
+    // });
+    // if (!files || Object.keys(files).length === 0) {
+    //  // console.log("⚠️ [ImageUpload] No files in request, skipping middleware");
+    //   return next();
+    // }
     try {
         const uploadPromises = [];
         // --- A. PROCESS COVER IMAGE ---
@@ -55,30 +86,62 @@ const processPostImages = async (req, res, next) => {
         }
         // --- B. PROCESS OG IMAGE ---
         if (files.ogImage?.[0]) {
+            // console.log("🖼️ [ImageUpload] ogImage file detected:", {
+            //   filename: files.ogImage[0].originalname,
+            //   size: files.ogImage[0].size,
+            //   mimetype: files.ogImage[0].mimetype,
+            //   path: files.ogImage[0].path
+            // });
             const file = files.ogImage[0];
-            const promise = cloudinary_1.v2.uploader.upload(file.path, {
-                folder: `${config_1.default?.CLOUDINARY_FOLDER}/seo`,
-                format: 'jpg',
-                transformation: [
-                    { width: 1200, height: 630, crop: "fill", gravity: "center" },
-                    { quality: "auto" }
-                ]
-            }).then((result) => {
-                // Handle nested SEO object
-                if (!req.body.seo)
-                    req.body.seo = {};
-                if (typeof req.body.seo === 'string') {
-                    try {
-                        req.body.seo = JSON.parse(req.body.seo);
-                    }
-                    catch (e) {
+            const promise = (async () => {
+                try {
+                    // console.log("☁️ [ImageUpload] Uploading ogImage to Cloudinary...");
+                    const result = await cloudinary_1.v2.uploader.upload(file.path, {
+                        folder: `${config_1.default.CLOUDINARY_FOLDER}/seo`,
+                        format: "webp",
+                        transformation: [
+                            { width: 1200, height: 630, crop: "fill", gravity: "center" },
+                            { quality: "auto" },
+                        ],
+                    });
+                    // console.log("✅ [ImageUpload] Cloudinary upload successful:", {
+                    //   secure_url: result.secure_url,
+                    //   public_id: result.public_id
+                    // });
+                    // console.log("📦 [ImageUpload] SEO object before processing:", {
+                    //   seo: req.body.seo,
+                    //   type: typeof req.body.seo
+                    // });
+                    // Ensure SEO object exists
+                    if (!req.body.seo)
                         req.body.seo = {};
+                    // Parse SEO if sent as JSON string
+                    if (typeof req.body.seo === "string") {
+                        try {
+                            req.body.seo = JSON.parse(req.body.seo);
+                            // console.log("📦 [ImageUpload] SEO parsed from JSON string:", req.body.seo);
+                        }
+                        catch {
+                            // console.log("⚠️ [ImageUpload] Failed to parse SEO JSON, using empty object");
+                            req.body.seo = {};
+                        }
                     }
+                    req.body.seo.ogImage = result.secure_url;
+                    // console.log("✅ [ImageUpload] ogImage set in req.body.seo:", req.body.seo.ogImage);
                 }
-                req.body.seo.ogImage = result.secure_url;
-                return fs_extra_1.default.unlink(file.path);
-            });
+                catch (error) {
+                    console.error("❌ [ImageUpload] Error uploading ogImage:", error);
+                    throw error;
+                }
+                finally {
+                    // Always cleanup temp file
+                    await fs_extra_1.default.unlink(file.path).catch(() => { });
+                }
+            })();
             uploadPromises.push(promise);
+        }
+        else {
+            // console.log("⚠️ [ImageUpload] No ogImage file found in request");
         }
         // --- C. PROCESS GALLERY ---
         if (files.gallery && files.gallery.length > 0) {

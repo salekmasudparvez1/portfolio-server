@@ -1,4 +1,3 @@
-
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
@@ -10,40 +9,34 @@ import { PostRouter } from './app/modules/post/post.routes';
 import { ContactRouter } from './app/modules/contact/contact.routes';
 import limiter from './app/middlewares/limiter';
 
-
-
-
-
-
-
 const app: Application = express();
 
-app.use(limiter)
+// 1. CORS MUST BE FIRST (Before parsers and limiters)
+app.use(cors({ 
+  origin: ['http://localhost:3000', 'http://localhost:5000', 'https://api.parvez.dev', 'https://parvez.dev'], 
+  credentials: true 
+}));
 
-//parsers
+// 2. Parsers
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser()); // Essential for req.cookies
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5000', 'https://api.parvez.dev', 'https://parvez.dev'], credentials: true }));
+// 3. Limiter (After CORS, so browser knows request was allowed even if rate limited)
+app.use(limiter);
 
-// application routes
-
+// 4. Application Routes
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/post', PostRouter);
 app.use('/api/contact', ContactRouter);
 
-
-
-
 app.get('/', (req: Request, res: Response) => {
   res.send('Server is running !');
 });
 
+// 5. Errors
 app.use(globalErrorHandler);
-
-//Not Found
 app.use(notFound);
 
 export default app;

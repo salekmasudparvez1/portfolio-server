@@ -20,21 +20,19 @@ router.post(
     "/",
     verifyAdmin,
     uploadMixed, 
-    processPostImages, 
-    validateRequest(PostValidations.createPostValidation),
+    processPostImages,
     PostController.createPost
 );
 
 router.patch(
     "/:id",
     verifyAdmin,
-    verifyAdmin,
     uploadMixed, 
     processPostImages, 
-    validateRequest(PostValidations.updatePostValidation),
     PostController.updatePost
 );
 
 router.delete("/:id", verifyAdmin, PostController.deletePost);
+router.put('/view/:slug', PostController.incrementViews);
 
 export const PostRouter = router;

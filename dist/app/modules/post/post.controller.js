@@ -45,7 +45,7 @@ const getPostBySlug = (0, catchAsync_1.default)(async (req, res) => {
     });
 });
 const updatePost = (0, catchAsync_1.default)(async (req, res) => {
-    const result = await post_service_1.PostService.updatePost(req.params.id, req.body);
+    const result = await post_service_1.PostService.updatePost(req.params.id, req);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -63,11 +63,11 @@ const deletePost = (0, catchAsync_1.default)(async (req, res) => {
     });
 });
 const incrementViews = (0, catchAsync_1.default)(async (req, res) => {
-    const result = await post_service_1.PostService.incrementViews(req.params.id);
+    const result = await post_service_1.PostService.incrementViews(req.params.slug, req, res);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: "Views incremented successfully",
+        message: result.message,
         data: result,
     });
 });
