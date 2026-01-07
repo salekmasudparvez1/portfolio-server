@@ -119,12 +119,10 @@ const updatePost = async (id, payload) => {
             throw new AppError_1.default(http_status_1.default.CONFLICT, "Slug already exists");
         }
     }
-   
     const result = await post_model_1.Post.findByIdAndUpdate(id, payload, {
         new: true,
         runValidators: true,
     });
-   
     if (!result) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Post not found");
     }

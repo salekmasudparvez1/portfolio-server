@@ -11,7 +11,10 @@ const notFound_1 = __importDefault(require("./app/middlewares/notFound"));
 const auth_routes_1 = __importDefault(require("./app/modules/auth/auth.routes"));
 const admin_routes_1 = __importDefault(require("./app/modules/admin/admin.routes"));
 const post_routes_1 = require("./app/modules/post/post.routes");
+const contact_routes_1 = require("./app/modules/contact/contact.routes");
+const limiter_1 = __importDefault(require("./app/middlewares/limiter"));
 const app = (0, express_1.default)();
+app.use(limiter_1.default);
 //parsers
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
@@ -21,6 +24,7 @@ app.use((0, cors_1.default)({ origin: ['http://localhost:3000', 'http://localhos
 app.use('/api/auth', auth_routes_1.default);
 app.use('/api/admin', admin_routes_1.default);
 app.use('/api/post', post_routes_1.PostRouter);
+app.use('/api/contact', contact_routes_1.ContactRouter);
 app.get('/', (req, res) => {
     res.send('Server is running !');
 });

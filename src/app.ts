@@ -7,11 +7,16 @@ import notFound from './app/middlewares/notFound';
 import authRouter from './app/modules/auth/auth.routes';
 import adminRouter from './app/modules/admin/admin.routes';
 import { PostRouter } from './app/modules/post/post.routes';
+import { ContactRouter } from './app/modules/contact/contact.routes';
+import limiter from './app/middlewares/limiter';
+
 
 
 
 
 const app: Application = express();
+
+app.use(limiter)
 
 //parsers
 app.use(express.json());
@@ -21,9 +26,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5000', 'https://api.parvez.dev', 'https://parvez.dev'], credentials: true }));
 
 // application routes
+
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/post', PostRouter);
+app.use('/api/contact', ContactRouter);
 
 
 

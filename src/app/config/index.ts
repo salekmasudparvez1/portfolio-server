@@ -26,4 +26,7 @@ export default {
   RESEND_API_KEY:process.env.RESEND_API_KEY,
   ADMIN_REGISTRATION_KEY: process.env.ADMIN_REGISTRATION_KEY,
   EMAIL_TEMPLATE_ID: process.env.EMAIL_TEMPLATE_ID,
+  HOST_URL: process.env.HOST_URL,
+  REDIS_PORT: process.env.REDIS_PORT,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
 };

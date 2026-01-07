@@ -6,7 +6,15 @@ import { z } from "zod";
 
 // Empty string → undefined (useful for optional URL inputs)
 const emptyStringUrl = z.preprocess(
-  (val) => (val === "" ? undefined : val),
+  (val) => {
+    // Handle both string and object cases
+    if (val === "" || val === null || val === undefined) return undefined;
+    // If it's already an object with secure_url (from Cloudinary), extract it
+    if (typeof val === "object" && val !== null && "secure_url" in val) {
+      return (val as any).secure_url;
+    }
+    return val;
+  },
   z.string().url({ message: "Invalid URL format" }).optional()
 );
 
@@ -76,7 +84,7 @@ const seoSchema = z.object({
     .optional(),
   keywords: stringToArray,
   canonicalUrl: emptyStringUrl,
-  ogImage: emptyStringUrl,
+  ogImage: emptyStringUrl, // Now handles both string URLs and Cloudinary objects
 });
 
 /* -----------------------------------------------------
