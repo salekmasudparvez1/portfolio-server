@@ -84,7 +84,19 @@ const seoSchema = z.object({
     .optional(),
   keywords: stringToArray,
   canonicalUrl: emptyStringUrl,
-  ogImage: emptyStringUrl, // Now handles both string URLs and Cloudinary objects
+  ogImage: z.preprocess(
+    (val) => {
+      // Handle empty values
+      if (val === "" || val === null || val === undefined) return undefined;
+      // If it's an object with secure_url (from Cloudinary), extract it
+      if (typeof val === "object" && val !== null && "secure_url" in val) {
+        return (val as any).secure_url;
+      }
+      // If it's already a string, return it
+      return val;
+    },
+    z.string().url({ message: "Invalid URL format" }).optional()
+  ),
 });
 
 /* -----------------------------------------------------

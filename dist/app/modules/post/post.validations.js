@@ -79,7 +79,17 @@ const seoSchema = zod_1.z.object({
         .optional(),
     keywords: stringToArray,
     canonicalUrl: emptyStringUrl,
-    ogImage: emptyStringUrl, // Now handles both string URLs and Cloudinary objects
+    ogImage: zod_1.z.preprocess((val) => {
+        // Handle empty values
+        if (val === "" || val === null || val === undefined)
+            return undefined;
+        // If it's an object with secure_url (from Cloudinary), extract it
+        if (typeof val === "object" && val !== null && "secure_url" in val) {
+            return val.secure_url;
+        }
+        // If it's already a string, return it
+        return val;
+    }, zod_1.z.string().url({ message: "Invalid URL format" }).optional()),
 });
 /* -----------------------------------------------------
    3. BASE POST SCHEMA

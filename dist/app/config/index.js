@@ -28,8 +28,13 @@ exports.default = {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     ADMIN_REGISTRATION_KEY: process.env.ADMIN_REGISTRATION_KEY,
     EMAIL_TEMPLATE_ID: process.env.EMAIL_TEMPLATE_ID,
-    HOST_URL: process.env.HOST_URL,
+    REDIS_HOST_URL: process.env.REDIS_HOST_URL,
+    RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
+    RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS,
+    REDIS_TLS: process.env.REDIS_TLS,
     REDIS_PORT: process.env.REDIS_PORT,
     REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN
 };
 //# sourceMappingURL=index.js.map

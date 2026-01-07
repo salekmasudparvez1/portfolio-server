@@ -20,9 +20,14 @@ declare const _default: {
     RESEND_API_KEY: string | undefined;
     ADMIN_REGISTRATION_KEY: string | undefined;
     EMAIL_TEMPLATE_ID: string | undefined;
-    HOST_URL: string | undefined;
+    REDIS_HOST_URL: string | undefined;
+    RATE_LIMIT_WINDOW_MS: string | undefined;
+    RATE_LIMIT_MAX_REQUESTS: string | undefined;
+    REDIS_TLS: string | undefined;
     REDIS_PORT: string | undefined;
     REDIS_PASSWORD: string | undefined;
+    UPSTASH_REDIS_REST_URL: string | undefined;
+    UPSTASH_REDIS_REST_TOKEN: string | undefined;
 };
 export default _default;
 //# sourceMappingURL=index.d.ts.map
