@@ -9,20 +9,20 @@ export declare const basePostSchema: z.ZodObject<{
     excerpt: z.ZodString;
     content: z.ZodString;
     author: z.ZodString;
-    coverImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+    coverImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
     gallery: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
     tags: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodArray<z.ZodString>>;
     projectLinks: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
-        live: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-        githubClient: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-        githubServer: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+        live: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+        githubClient: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+        githubServer: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
     }, z.core.$strip>>>;
     seo: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
         metaTitle: z.ZodOptional<z.ZodString>;
         metaDescription: z.ZodOptional<z.ZodString>;
         keywords: z.ZodPipe<z.ZodTransform<any[] | undefined, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
-        canonicalUrl: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-        ogImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+        canonicalUrl: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+        ogImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
     }, z.core.$strip>>>;
     isFeatured: z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>;
     isPublished: z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>;
@@ -40,20 +40,20 @@ export declare const createPostValidation: z.ZodObject<{
         excerpt: z.ZodString;
         content: z.ZodString;
         author: z.ZodString;
-        coverImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+        coverImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
         gallery: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
         tags: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodArray<z.ZodString>>;
         projectLinks: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
-            live: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-            githubClient: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-            githubServer: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+            live: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+            githubClient: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+            githubServer: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
         }, z.core.$strip>>>;
         seo: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
             metaTitle: z.ZodOptional<z.ZodString>;
             metaDescription: z.ZodOptional<z.ZodString>;
             keywords: z.ZodPipe<z.ZodTransform<any[] | undefined, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
-            canonicalUrl: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-            ogImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+            canonicalUrl: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+            ogImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
         }, z.core.$strip>>>;
         isFeatured: z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>;
         isPublished: z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>;
@@ -72,20 +72,20 @@ export declare const updatePostValidation: z.ZodObject<{
         excerpt: z.ZodOptional<z.ZodString>;
         content: z.ZodOptional<z.ZodString>;
         author: z.ZodOptional<z.ZodString>;
-        coverImage: z.ZodOptional<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>>;
+        coverImage: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>>;
         gallery: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>>;
         tags: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodArray<z.ZodString>>>;
         projectLinks: z.ZodOptional<z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
-            live: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-            githubClient: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-            githubServer: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+            live: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+            githubClient: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+            githubServer: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
         }, z.core.$strip>>>>;
         seo: z.ZodOptional<z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
             metaTitle: z.ZodOptional<z.ZodString>;
             metaDescription: z.ZodOptional<z.ZodString>;
             keywords: z.ZodPipe<z.ZodTransform<any[] | undefined, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
-            canonicalUrl: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-            ogImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+            canonicalUrl: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+            ogImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
         }, z.core.$strip>>>>;
         isFeatured: z.ZodOptional<z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>>;
         isPublished: z.ZodOptional<z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>>;
@@ -105,20 +105,20 @@ export declare const PostValidations: {
             excerpt: z.ZodString;
             content: z.ZodString;
             author: z.ZodString;
-            coverImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+            coverImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
             gallery: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
             tags: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodArray<z.ZodString>>;
             projectLinks: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
-                live: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-                githubClient: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-                githubServer: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+                live: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+                githubClient: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+                githubServer: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
             }, z.core.$strip>>>;
             seo: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
                 metaTitle: z.ZodOptional<z.ZodString>;
                 metaDescription: z.ZodOptional<z.ZodString>;
                 keywords: z.ZodPipe<z.ZodTransform<any[] | undefined, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
-                canonicalUrl: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-                ogImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+                canonicalUrl: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+                ogImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
             }, z.core.$strip>>>;
             isFeatured: z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>;
             isPublished: z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>;
@@ -137,20 +137,20 @@ export declare const PostValidations: {
             excerpt: z.ZodOptional<z.ZodString>;
             content: z.ZodOptional<z.ZodString>;
             author: z.ZodOptional<z.ZodString>;
-            coverImage: z.ZodOptional<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>>;
+            coverImage: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>>;
             gallery: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>>;
             tags: z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodArray<z.ZodString>>>;
             projectLinks: z.ZodOptional<z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
-                live: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-                githubClient: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-                githubServer: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+                live: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+                githubClient: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+                githubServer: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
             }, z.core.$strip>>>>;
             seo: z.ZodOptional<z.ZodOptional<z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodObject<{
                 metaTitle: z.ZodOptional<z.ZodString>;
                 metaDescription: z.ZodOptional<z.ZodString>;
                 keywords: z.ZodPipe<z.ZodTransform<any[] | undefined, unknown>, z.ZodOptional<z.ZodArray<z.ZodString>>>;
-                canonicalUrl: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
-                ogImage: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+                canonicalUrl: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
+                ogImage: z.ZodPipe<z.ZodTransform<any, unknown>, z.ZodOptional<z.ZodString>>;
             }, z.core.$strip>>>>;
             isFeatured: z.ZodOptional<z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>>;
             isPublished: z.ZodOptional<z.ZodDefault<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodBoolean>>>;

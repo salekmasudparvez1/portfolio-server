@@ -6,7 +6,16 @@ const zod_1 = require("zod");
    1. REUSABLE HELPERS
 ----------------------------------------------------- */
 // Empty string → undefined (useful for optional URL inputs)
-const emptyStringUrl = zod_1.z.preprocess((val) => (val === "" ? undefined : val), zod_1.z.string().url({ message: "Invalid URL format" }).optional());
+const emptyStringUrl = zod_1.z.preprocess((val) => {
+    // Handle both string and object cases
+    if (val === "" || val === null || val === undefined)
+        return undefined;
+    // If it's already an object with secure_url (from Cloudinary), extract it
+    if (typeof val === "object" && val !== null && "secure_url" in val) {
+        return val.secure_url;
+    }
+    return val;
+}, zod_1.z.string().url({ message: "Invalid URL format" }).optional());
 // "true" | "false" | boolean → boolean
 const booleanString = zod_1.z.preprocess((val) => {
     if (typeof val === "string") {
@@ -70,7 +79,7 @@ const seoSchema = zod_1.z.object({
         .optional(),
     keywords: stringToArray,
     canonicalUrl: emptyStringUrl,
-    ogImage: emptyStringUrl,
+    ogImage: emptyStringUrl, // Now handles both string URLs and Cloudinary objects
 });
 /* -----------------------------------------------------
    3. BASE POST SCHEMA
